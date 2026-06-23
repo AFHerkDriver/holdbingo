@@ -94,6 +94,23 @@
   .alarmbar[data-state="firing"]{background:var(--warn-dim);color:var(--warn);border-color:var(--warn);animation:pulse .65s ease-in-out infinite}
   .alarm-note{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:5px;letter-spacing:.02em;line-height:1.4}
 
+  /* ---- QUICK FOB ---- */
+  .quickfob{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px 10px;margin-top:12px;display:none}
+  .quickfob.show{display:block}
+  .qf-label{font-size:10px;letter-spacing:.24em;color:var(--muted);font-weight:700;margin-bottom:8px}
+  .qf-row{display:flex;align-items:center;gap:10px}
+  .qf-row input{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    color:var(--txt);font-family:var(--mono);font-size:28px;font-weight:700;
+    width:110px;padding:8px 12px;outline:none;font-variant-numeric:tabular-nums;text-align:center;flex-shrink:0}
+  .qf-row input:focus{border-color:var(--go);box-shadow:0 0 0 1px rgba(31,224,138,.25)}
+  .qf-unit{font-family:var(--mono);font-size:12px;color:var(--muted);flex:1}
+  .qf-row button{background:var(--go-dim);border:1px solid #1c5c45;color:var(--go);
+    font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.1em;
+    padding:12px 20px;border-radius:10px;cursor:pointer;white-space:nowrap;margin-left:auto}
+  .qf-row button:active{background:#124032}
+  .qf-hint{font-family:var(--mono);font-size:11px;color:var(--go);margin-top:6px;min-height:16px;letter-spacing:.03em}
+
   /* ---- FUEL BAR ---- */
   .fuelbar{margin:13px 0 4px}
   .track{height:18px;border-radius:9px;background:#08110e;border:1px solid var(--line);
@@ -288,6 +305,17 @@
   <button class="alarmbar" id="alarmBtn" data-state="off" aria-pressed="false">ALARM OFF</button>
   <div class="alarm-note">Chimes at hold-time expiration. Keep the app in the foreground; screen stays awake while armed.</div>
 
+  <!-- QUICK FOB UPDATE -->
+  <div class="quickfob" id="quickFob">
+    <div class="qf-label">FUEL CHECK</div>
+    <div class="qf-row">
+      <input id="qfInput" inputmode="decimal" placeholder="36.0" autocomplete="off" aria-label="Quick FOB in thousands">
+      <span class="qf-unit">× 1,000 <span class="qf-unit-lbl">LB</span></span>
+      <button id="qfApply">UPDATE</button>
+    </div>
+    <div class="qf-hint" id="qfHint">&nbsp;</div>
+  </div>
+
   <!-- FUEL BAR -->
   <div class="fuelbar">
     <div class="track" id="track">
@@ -400,7 +428,7 @@
 
   <div class="foot">
     Decision support only — verify against approved aircraft performance data and reserves.<br>
-    Hold / Bingo · v1.2
+    Hold / Bingo · v1.4
   </div>
 </div>
 
@@ -428,7 +456,7 @@
   let unit='LB', activeAC=null, activeFloor=null, reserveAuto=false;
   let armed=false, firing=false, alarmFired=false, audioCtx=null, alarmTimer=null, wakeLock=null;
   let pushTime=null, holdStartTime=null, isLocked=false, nightMode=false;
-  let cautMin=10; // caution threshold in minutes
+  let cautMin=10, dataReady=false;
 
   const ffUnit=()=>unit+'/HR';
   const num=v=>{const n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:NaN;};
@@ -448,11 +476,19 @@
     setUnitLabels();
   }
   function setBarState(s){
-    const seg=$('segHold'),tr=$('track'),dot=$('dotHold');
+    const seg=$('segHold'),tr=$('track'),dot=$('dotHold'),div=$('segDivert');
     seg.classList.remove('caution','warn');tr.classList.remove('caution','warn');
-    if(s==='caution'){seg.classList.add('caution');tr.classList.add('caution');dot.style.background='var(--caution)';}
-    else if(s==='warn'){seg.classList.add('warn');tr.classList.add('warn');dot.style.background='var(--warn)';}
-    else{dot.style.background='var(--go)';}
+    div.style.background='';
+    if(s==='caution'){
+      seg.classList.add('caution');tr.classList.add('caution');
+      dot.style.background='var(--caution)';
+    }else if(s==='warn'){
+      seg.classList.add('warn');tr.classList.add('warn');
+      dot.style.background='var(--warn)';
+      div.style.background='linear-gradient(180deg,#ff5b52,#cc2b22)';
+    }else{
+      dot.style.background='var(--go)';
+    }
   }
 
   // ---- persist aircraft selection ----
@@ -533,14 +569,12 @@
     return d;
   }
 
-  // ---- lock / unlock ----
+  // ---- lock / unlock (input protection only) ----
   $('lockBtn').addEventListener('click',()=>{
     isLocked=!isLocked;
     document.body.classList.toggle('locked',isLocked);
     $('lockBtn').textContent=isLocked?'UNLOCK':'LOCK';
     $('lockBtn').classList.toggle('locked',isLocked);
-    if(isLocked && pushTime){holdStartTime=holdStartTime||new Date();$('elapsedBadge').classList.add('show');}
-    else{holdStartTime=null;$('elapsedBadge').classList.remove('show');}
   });
 
   // ---- night mode ----
@@ -559,7 +593,8 @@
     FIELDS.forEach(id=>{const e=$(id);if(e)e.value='';});
     isLocked=false;document.body.classList.remove('locked');
     $('lockBtn').textContent='LOCK';$('lockBtn').classList.remove('locked');
-    holdStartTime=null;$('elapsedBadge').classList.remove('show');
+    dataReady=false;holdStartTime=null;$('elapsedBadge').classList.remove('show');
+    $('quickFob').classList.remove('show');$('qfInput').value='';$('qfHint').textContent='\u00a0';
     if(firing)stopAlarm();alarmFired=false;
     if(activeAC){reserveAuto=false;setFloor(activeFloor||'min');}
     syncArrChips();compute();
@@ -572,8 +607,14 @@
     const divert=isFinite(dv)?dv:0, reserve=isFinite(rs)?rs:0, bingo=divert+reserve;
     const hasData = isFinite(fob)&&fob>0;
 
-    // show lock button once we have fob + ff
-    $('lockBtn').classList.toggle('show', isFinite(fob)&&fob>0&&isFinite(ff)&&ff>0);
+    // show lock + quick-fob once we have fob + ff
+    const nowReady = isFinite(fob)&&fob>0&&isFinite(ff)&&ff>0;
+    $('lockBtn').classList.toggle('show', nowReady);
+    $('quickFob').classList.toggle('show', nowReady);
+    $('qfUnitLbl') && ($('qfUnitLbl').textContent=unit);
+    // auto-start elapsed timer on first valid data entry
+    if(nowReady && !dataReady){dataReady=true;holdStartTime=new Date();$('elapsedBadge').classList.add('show');}
+    if(!nowReady && !isLocked){dataReady=false;holdStartTime=null;$('elapsedBadge').classList.remove('show');}
 
     // bingo hero
     if(bingo>0){
@@ -691,6 +732,26 @@
   });
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible' && armed){ensureAudio();reqWake();}
+  });
+
+  // ---- quick FOB update ----
+  function applyQuickFob(){
+    const raw = $('qfInput').value.trim();
+    if(!raw)return;
+    const n = parseFloat(raw);
+    if(!isFinite(n)||n<=0){$('qfHint').textContent='Invalid entry';return;}
+    const lbs = Math.round(n * 1000);
+    $('fob').value = lbs;
+    $('qfHint').textContent = lbs.toLocaleString()+' '+unit+' set';
+    $('qfInput').value='';
+    compute();
+  }
+  $('qfApply').addEventListener('click', applyQuickFob);
+  $('qfInput').addEventListener('keydown', e=>{if(e.key==='Enter')applyQuickFob();});
+  $('qfInput').addEventListener('input',()=>{
+    const n=parseFloat($('qfInput').value);
+    if(isFinite(n)&&n>0){$('qfHint').textContent='= '+Math.round(n*1000).toLocaleString()+' '+unit;}
+    else{$('qfHint').textContent='\u00a0';}
   });
 
   // ---- divert builder ----
