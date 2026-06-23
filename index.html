@@ -20,48 +20,53 @@
     --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
   body{
-    background:radial-gradient(120% 70% at 50% -8%, #0c1a16 0%, var(--bg) 60%) fixed;
+    background:radial-gradient(120% 70% at 50% -8%,#0c1a16 0%,var(--bg) 60%) fixed;
     color:var(--txt);font-family:var(--sans);-webkit-text-size-adjust:100%;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     min-height:100vh;
   }
-  .wrap{max-width:1040px;margin:0 auto;padding:16px 18px 48px}
+  .wrap{max-width:1100px;margin:0 auto;padding:14px 16px 48px}
 
-  .bar{display:flex;align-items:baseline;justify-content:space-between;
-    border-bottom:1px solid var(--line);padding:4px 2px 13px;margin-bottom:15px}
-  .bar h1{font-size:16px;font-weight:700;letter-spacing:.24em;margin:0;color:var(--go)}
+  /* ---- TOP BAR ---- */
+  .bar{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:13px;flex-wrap:wrap}
+  .bar h1{font-size:15px;font-weight:700;letter-spacing:.24em;margin:0;color:var(--go);flex-shrink:0}
   .bar h1 .slash{color:var(--muted)}
-  .zulu{font-family:var(--mono);font-size:14px;color:var(--muted);letter-spacing:.06em}
+  .bar-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+  .zulu{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.06em;white-space:nowrap}
   .zulu b{color:var(--txt);font-weight:500}
+  .elapsed-badge{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;padding:5px 10px;white-space:nowrap;display:none}
+  .elapsed-badge.show{display:block}
+  .elapsed-badge b{color:var(--caution);font-weight:700}
+  .lock-btn{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--muted);
+    padding:5px 12px;cursor:pointer;white-space:nowrap;display:none}
+  .lock-btn.show{display:block}
+  .lock-btn.locked{background:var(--go-dim);color:var(--go);border-color:#1c5c45}
 
-  /* aircraft tabs */
+  /* ---- AIRCRAFT TABS ---- */
   .actabs{display:flex;gap:8px;margin-bottom:13px}
   .actabs button{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;
     color:var(--muted);font-family:var(--mono);font-size:16px;font-weight:700;padding:13px 0;cursor:pointer;letter-spacing:.08em}
   .actabs button[aria-pressed="true"]{background:var(--go-dim);color:var(--go);border-color:#1c5c45}
-  .actabs button .sm{display:block;font-size:9px;letter-spacing:.16em;color:var(--muted);font-weight:600;margin-top:2px}
-  .actabs button[aria-pressed="true"] .sm{color:#3fae84}
 
   /* ---- HERO BAND ---- */
-  .herorow{display:flex;flex-direction:column;gap:12px}
+  .herorow{display:flex;gap:12px}
   .hero{background:var(--panel);border:1px solid var(--line);border-radius:16px;
-    padding:20px 18px 18px;text-align:center;position:relative;overflow:hidden;
-    display:flex;flex-direction:column;justify-content:center}
-  .state-label{font-size:11px;letter-spacing:.32em;font-weight:700;color:var(--muted);
-    margin-bottom:9px;text-transform:uppercase}
-  .bignum{font-family:var(--mono);font-weight:700;line-height:.92;letter-spacing:-.01em;
-    font-variant-numeric:tabular-nums}
-  .holdtime{font-size:clamp(54px,11vw,112px);color:var(--go);text-shadow:0 0 24px rgba(31,224,138,.25)}
-  .holdtime .u{font-size:.32em;letter-spacing:.18em;color:var(--muted);margin-left:.14em;text-shadow:none}
-  .bingoNum{font-size:clamp(48px,10vw,100px);color:var(--txt)}
-  .bingoNum .u{font-size:.30em;letter-spacing:.16em;color:var(--muted);margin-left:.14em}
-  .sub{display:flex;justify-content:center;gap:26px;margin-top:16px;
-    font-family:var(--mono);font-size:14px;color:var(--muted);flex-wrap:wrap}
-  .sub .k{display:block;font-size:9.5px;letter-spacing:.18em;margin-bottom:3px}
-  .sub b{color:var(--txt);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums}
+    padding:18px 16px 16px;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center}
+  .state-label{font-size:11px;letter-spacing:.32em;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase}
+  .bignum{font-family:var(--mono);font-weight:700;line-height:.92;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .holdtime{font-size:clamp(44px,9vw,100px);color:var(--go);text-shadow:0 0 24px rgba(31,224,138,.22)}
+  .holdtime .u{font-size:.28em;letter-spacing:.15em;color:var(--muted);margin-left:.12em;text-shadow:none}
+  .bingoNum{font-size:clamp(38px,8vw,90px);color:var(--txt)}
+  .bingoNum .u{font-size:.26em;letter-spacing:.14em;color:var(--muted);margin-left:.12em}
+  .sub{display:flex;justify-content:center;gap:20px;margin-top:14px;
+    font-family:var(--mono);font-size:13px;color:var(--muted);flex-wrap:wrap}
+  .sub .k{display:block;font-size:9px;letter-spacing:.18em;margin-bottom:3px}
+  .sub b{color:var(--txt);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
 
   .readout.caution .holdtime{color:var(--caution);text-shadow:0 0 24px rgba(255,176,0,.25)}
   .readout.caution .state-label{color:var(--caution)}
@@ -70,28 +75,31 @@
   .readout.warn .state-label{color:var(--warn)}
   .bingo.warn .bingoNum{color:var(--warn);text-shadow:0 0 24px rgba(255,59,48,.3)}
   .bingo.warn .state-label{color:var(--warn)}
+  .readout.firing{animation:pulse .6s ease-in-out infinite;border-color:var(--warn)}
   @keyframes pulse{50%{border-color:var(--warn)}}
 
-  .alarmbar{display:block;width:100%;margin-top:13px;background:var(--panel);border:1px solid var(--line);
+  /* ---- FLEET REF ---- */
+  .fleetref{display:none;margin-top:11px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .fleetref.show{display:block}
+  .fr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+  .fr-grid>div .k{font-size:9px;letter-spacing:.12em;color:var(--muted);display:block;margin-bottom:3px}
+  .fr-grid>div b{font-family:var(--mono);font-size:16px;color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+  .fr-grid>div.emer b{color:var(--caution)}
+
+  /* ---- ALARM BAR ---- */
+  .alarmbar{display:block;width:100%;margin-top:12px;background:var(--panel);border:1px solid var(--line);
     border-radius:12px;color:var(--muted);font-family:var(--mono);font-size:14px;font-weight:700;
-    letter-spacing:.18em;padding:14px;cursor:pointer;text-align:center}
+    letter-spacing:.18em;padding:13px;cursor:pointer;text-align:center}
   .alarmbar[data-state="armed"]{background:var(--go-dim);color:var(--go);border-color:#1c5c45}
   .alarmbar[data-state="firing"]{background:var(--warn-dim);color:var(--warn);border-color:var(--warn);animation:pulse .65s ease-in-out infinite}
-  .alarm-note{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:.03em;line-height:1.4}
-  .readout.firing{animation:pulse .6s ease-in-out infinite;border-color:var(--warn)}
+  .alarm-note{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:5px;letter-spacing:.02em;line-height:1.4}
 
-  /* fleet ref */
-  .fleetref{display:none;margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-  .fleetref.show{display:block}
-  .fleetref .fr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center}
-  .fleetref .fr-grid>div .k{font-size:9px;letter-spacing:.12em;color:var(--muted);display:block;margin-bottom:3px}
-  .fleetref .fr-grid>div b{font-family:var(--mono);font-size:17px;color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
-  .fleetref .fr-grid>div.emer b{color:var(--caution)}
-
-  /* fuel bar */
-  .fuelbar{margin:14px 0 4px}
-  .track{height:18px;border-radius:9px;background:#08110e;border:1px solid var(--line);display:flex;overflow:hidden;transition:box-shadow .25s}
+  /* ---- FUEL BAR ---- */
+  .fuelbar{margin:13px 0 4px}
+  .track{height:18px;border-radius:9px;background:#08110e;border:1px solid var(--line);
+    display:flex;overflow:hidden;transition:box-shadow .25s}
   .seg{height:100%;transition:width .3s ease,background .3s ease;box-shadow:inset -1.5px 0 0 rgba(8,17,14,.85)}
+  .seg:last-child{box-shadow:none}
   .seg.hold{background:linear-gradient(180deg,#27f29a,#13b56c)}
   .seg.hold.caution{background:linear-gradient(180deg,#ffd24a,#e09400)}
   .seg.hold.warn{background:linear-gradient(180deg,#ff5b52,#cc2b22)}
@@ -99,26 +107,31 @@
   .seg.reserve{background:linear-gradient(180deg,#ff5b52,#cc2b22)}
   .track.caution{box-shadow:0 0 0 1px var(--caution),0 0 14px rgba(255,176,0,.22)}
   .track.warn{box-shadow:0 0 0 1px var(--warn),0 0 16px rgba(255,59,48,.30);animation:pulse .65s ease-in-out infinite}
-  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--muted);font-family:var(--mono)}
-  .legend span{display:flex;align-items:center;gap:6px}
-  .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block;transition:background .3s}
   .dot.hold{background:var(--go)}.dot.divert{background:var(--caution)}.dot.reserve{background:var(--warn)}
   .legend b{color:var(--txt);font-weight:600}
 
-  /* lower two-column area */
-  .lower{display:grid;grid-template-columns:1fr;gap:18px;margin-top:20px}
-  .sec-h{font-size:10px;letter-spacing:.24em;color:var(--muted);font-weight:700;margin:0 2px 10px;text-transform:uppercase}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .field{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px 9px;display:flex;flex-direction:column}
-  .field.full{grid-column:1 / -1}
+  /* ---- LOWER AREA ---- */
+  .lower{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+  .sec-h{font-size:10px;letter-spacing:.24em;color:var(--muted);font-weight:700;margin:0 2px 9px;text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .field{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px 9px;display:flex;flex-direction:column;position:relative;transition:opacity .2s}
+  .field.full{grid-column:1/-1}
   .field label{font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
   .field input{background:transparent;border:0;color:var(--txt);font-family:var(--mono);
     font-size:22px;font-weight:600;width:100%;padding:1px 0;outline:none;font-variant-numeric:tabular-nums}
   .field input::placeholder{color:#314540}
   .field:focus-within{border-color:var(--go);box-shadow:0 0 0 1px rgba(31,224,138,.25)}
   .field .unit{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;letter-spacing:.08em}
+  /* locked state */
+  body.locked .field input{pointer-events:none;color:var(--muted)}
+  body.locked .field{opacity:.8}
+  body.locked .toprow,.body.locked .actabs{pointer-events:none;opacity:.7}
 
-  .floorchips{display:none;grid-column:1 / -1;gap:8px;margin-top:-2px}
+  /* floor chips */
+  .floorchips{display:none;grid-column:1/-1;gap:8px;margin-top:-2px}
   .floorchips.show{display:flex}
   .floorchips button{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;
     color:var(--muted);font-family:var(--mono);font-size:13px;font-weight:600;padding:10px 0;cursor:pointer;letter-spacing:.04em}
@@ -126,25 +139,46 @@
   .floorchips button.emer[aria-pressed="true"]{background:var(--caution-dim);color:var(--caution);border-color:#5c4400}
   .floorchips .ck{font-size:9px;letter-spacing:.14em;display:block;color:inherit;opacity:.75}
 
-  .toprow{display:flex;gap:10px;align-items:stretch;margin-bottom:10px}
+  /* caution threshold */
+  .caut-row{display:flex;align-items:center;gap:10px;margin-top:-2px;grid-column:1/-1}
+  .caut-row label{font-size:10px;letter-spacing:.1em;color:var(--muted);white-space:nowrap}
+  .caut-row input{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--txt);
+    font-family:var(--mono);font-size:15px;font-weight:600;width:72px;padding:6px 9px;outline:none;
+    font-variant-numeric:tabular-nums;text-align:center}
+  .caut-row input:focus{border-color:var(--go)}
+  .caut-row span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+  .toprow{display:flex;gap:9px;align-items:stretch;margin-bottom:9px}
   .pill{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px;flex:1}
   .pill button{flex:1;background:transparent;border:0;color:var(--muted);font-family:var(--mono);
     font-size:13px;font-weight:600;padding:9px 0;border-radius:9px;cursor:pointer;letter-spacing:.05em}
   .pill button[aria-pressed="true"]{background:var(--go-dim);color:var(--go)}
-  .btn-reset{background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--muted);
-    font-family:var(--mono);font-size:12px;padding:0 18px;cursor:pointer;letter-spacing:.1em}
-  .btn-reset:active{background:var(--panel-2)}
+  .btn-reset{background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--warn);
+    font-family:var(--mono);font-size:12px;padding:0 16px;cursor:pointer;letter-spacing:.1em;font-weight:700}
+  .btn-reset:active{background:var(--warn-dim)}
 
-  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:10px;overflow:hidden}
-  summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:12.5px;color:var(--muted);
+  /* reset confirm */
+  .reset-confirm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;
+    align-items:center;justify-content:center;padding:24px}
+  .reset-confirm.show{display:flex}
+  .reset-box{background:var(--panel);border:1px solid var(--warn);border-radius:16px;padding:24px;max-width:340px;width:100%;text-align:center}
+  .reset-box p{font-size:15px;color:var(--txt);margin:0 0 20px;line-height:1.5}
+  .reset-box .rbtns{display:flex;gap:10px}
+  .reset-box .rbtns button{flex:1;border-radius:10px;font-family:var(--mono);font-size:14px;font-weight:700;padding:13px;cursor:pointer;letter-spacing:.08em}
+  .r-cancel{background:var(--panel-2);border:1px solid var(--line);color:var(--muted)}
+  .r-confirm{background:var(--warn-dim);border:1px solid var(--warn);color:var(--warn)}
+
+  /* builders / details */
+  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:9px;overflow:hidden}
+  summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:12px;color:var(--muted);
     font-family:var(--mono);letter-spacing:.06em;display:flex;justify-content:space-between;align-items:center}
   summary::-webkit-details-marker{display:none}
   summary .chev{transition:transform .2s}
   details[open] summary .chev{transform:rotate(90deg)}
   details[open] summary{color:var(--txt);border-bottom:1px solid var(--line)}
   .help-body{padding:12px 14px 14px}
-  .help-body .grid{margin-bottom:10px}
-  .arrchips{display:none;gap:8px;margin-bottom:10px}
+  .help-body .grid{margin-bottom:9px}
+  .arrchips{display:none;gap:8px;margin-bottom:9px}
   .arrchips.show{display:flex}
   .arrchips button{flex:1;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
     color:var(--txt);font-family:var(--mono);font-size:12px;font-weight:600;padding:10px 4px;cursor:pointer;letter-spacing:.02em}
@@ -154,32 +188,61 @@
   .apply{width:100%;background:var(--go-dim);border:1px solid #1c5c45;color:var(--go);
     font-family:var(--mono);font-size:13px;font-weight:600;padding:11px;border-radius:10px;cursor:pointer;letter-spacing:.08em}
   .apply:active{background:#124032}
-  .help-out{font-family:var(--mono);font-size:13px;color:var(--txt);text-align:center;margin-bottom:10px;min-height:18px}
+  .help-out{font-family:var(--mono);font-size:13px;color:var(--txt);text-align:center;margin-bottom:9px;min-height:18px}
   .help-out span{color:var(--muted)}
   .defs .help-body{font-family:var(--sans);font-size:12px;color:var(--muted);line-height:1.6}
   .defs b{color:var(--txt);font-weight:600}
 
-  .foot{margin-top:24px;font-size:11px;color:var(--muted);line-height:1.5;text-align:center;font-family:var(--mono);letter-spacing:.02em}
-  :focus-visible{outline:2px solid var(--go);outline-offset:2px}
-  @media (prefers-reduced-motion:reduce){.hero.warn,.track.warn{animation:none;border-color:var(--warn)}}
+  .foot{margin-top:22px;font-size:10.5px;color:var(--muted);line-height:1.5;text-align:center;font-family:var(--mono);letter-spacing:.02em}
 
-  /* ---- iPad / wide ---- */
-  @media(min-width:760px){
+  /* ---- NIGHT MODE ---- */
+  body.night{background:#000!important}
+  body.night .wrap{filter:brightness(.85) sepia(.25) hue-rotate(310deg)}
+  .night-btn{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--muted);
+    padding:5px 12px;cursor:pointer;white-space:nowrap}
+  .night-btn.on{background:#1a0a00;color:#ff6b35;border-color:#5a2200}
+
+  /* ---- PORTRAIT (single-column stacked) ---- */
+  @media(orientation:portrait){
+    .lower{grid-template-columns:1fr}
+    .herorow{flex-direction:column}
+    .herorow>.hero{flex:unset}
+    .holdtime{font-size:clamp(52px,18vw,96px)}
+    .bingoNum{font-size:clamp(44px,15vw,84px)}
+  }
+
+  /* ---- LANDSCAPE / WIDE ---- */
+  @media(orientation:landscape),(min-width:800px) and (orientation:portrait){
     .herorow{flex-direction:row}
     .herorow>.hero{flex:1}
-    .lower{grid-template-columns:1.12fr .88fr;gap:22px;align-items:start}
-    .field input{font-size:24px}
-    .field{padding:12px 14px 10px}
-    .actabs button{font-size:18px;padding:15px 0}
+    .holdtime{font-size:clamp(56px,9vw,120px)}
+    .bingoNum{font-size:clamp(50px,8vw,108px)}
+    .lower{grid-template-columns:1.1fr .9fr;gap:20px;align-items:start}
+    .actabs button{font-size:17px;padding:14px 0}
+    .field input{font-size:23px}
+    .sub b{font-size:18px}
+    .fr-grid>div b{font-size:17px}
   }
+
+  @media(prefers-reduced-motion:reduce){
+    .hero.warn,.track.warn,.readout.firing,.alarmbar[data-state="firing"]{animation:none;border-color:var(--warn)}
+  }
+  :focus-visible{outline:2px solid var(--go);outline-offset:2px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
+  <!-- TOP BAR -->
   <div class="bar">
     <h1>HOLD <span class="slash">/</span> BINGO</h1>
-    <div class="zulu">NOW <b id="clockZ">--:--</b>Z</div>
+    <div class="bar-right">
+      <div class="elapsed-badge" id="elapsedBadge">HOLD <b id="elapsedVal">00:00</b></div>
+      <button class="lock-btn" id="lockBtn">LOCK</button>
+      <button class="night-btn" id="nightBtn">NIGHT</button>
+      <div class="zulu">NOW <b id="clockZ">--:--</b>Z</div>
+    </div>
   </div>
 
   <!-- AIRCRAFT -->
@@ -189,18 +252,17 @@
     <button data-ac="MANUAL" aria-pressed="true">MANUAL</button>
   </div>
 
-  <!-- HERO BAND -->
+  <!-- HEROES -->
   <div class="herorow">
     <div class="readout hero" id="readout">
-      <div class="state-label" id="stateLabel">MAX HOLD TIME</div>
-      <div class="bignum holdtime"><span id="holdTime">--:--</span><span class="u">H:MM</span></div>
+      <div class="state-label" id="stateLabel">TIME TO PUSH</div>
+      <div class="bignum holdtime"><span id="holdTime">--:--</span><span class="u" id="holdFmt">H:MM:SS</span></div>
       <div class="sub">
         <div><span class="k">PUSH (Z)</span><b id="pushZ">--:--</b></div>
         <div><span class="k">PUSH (LCL)</span><b id="pushL">--:--</b></div>
-        <div><span class="k">COUNTDOWN</span><b id="cdown">--:--</b></div>
+        <div><span class="k">MAX HOLD</span><b id="cdown">--:--</b></div>
       </div>
     </div>
-
     <div class="bingo hero" id="bingoPanel">
       <div class="state-label">BINGO FUEL</div>
       <div class="bignum bingoNum"><span id="bingoVal">—</span><span class="u" id="bingoUnit">LB</span></div>
@@ -212,11 +274,7 @@
     </div>
   </div>
 
-  <!-- PUSH ALARM -->
-  <button class="alarmbar" id="alarmBtn" data-state="off" aria-pressed="false">ALARM OFF</button>
-  <div class="alarm-note">Chimes at hold-time expiration. Keep the app in the foreground; screen stays awake while armed.</div>
-
-  <!-- FLEET REFERENCE -->
+  <!-- FLEET REF -->
   <div class="fleetref" id="fleetref">
     <div class="fr-grid">
       <div><span class="k">MIN</span><b id="frMin">—</b></div>
@@ -225,6 +283,10 @@
       <div><span class="k">GA &amp; RTN</span><b id="frGar">—</b></div>
     </div>
   </div>
+
+  <!-- ALARM -->
+  <button class="alarmbar" id="alarmBtn" data-state="off" aria-pressed="false">ALARM OFF</button>
+  <div class="alarm-note">Chimes at hold-time expiration. Keep the app in the foreground; screen stays awake while armed.</div>
 
   <!-- FUEL BAR -->
   <div class="fuelbar">
@@ -241,11 +303,10 @@
     </div>
   </div>
 
-  <!-- LOWER: inputs | builders -->
+  <!-- LOWER -->
   <div class="lower">
-
     <div class="col-inputs">
-      <div class="sec-h">Fuel state</div>
+      <div class="sec-h">Fuel State</div>
       <div class="toprow">
         <div class="pill" role="group" aria-label="Fuel units">
           <button data-unit="LB" aria-pressed="true">LB</button>
@@ -256,22 +317,22 @@
       </div>
       <div class="grid">
         <div class="field full">
-          <label for="fob">Fuel on board (now)</label>
+          <label for="fob">Fuel On Board (Now)</label>
           <input id="fob" inputmode="decimal" placeholder="0" autocomplete="off">
           <span class="unit u-lbl">LB</span>
         </div>
         <div class="field">
-          <label for="ff">Hold fuel flow / hr</label>
+          <label for="ff">Hold Fuel Flow / Hr</label>
           <input id="ff" inputmode="decimal" placeholder="0" autocomplete="off">
           <span class="unit u-lbl">LB/HR</span>
         </div>
         <div class="field">
-          <label for="divert">Divert fuel req</label>
+          <label for="divert">Divert Fuel Req</label>
           <input id="divert" inputmode="decimal" placeholder="0" autocomplete="off">
           <span class="unit u-lbl">LB</span>
         </div>
         <div class="field full">
-          <label for="reserve">Reserve / floor (land with)</label>
+          <label for="reserve">Reserve / Floor (Land With)</label>
           <input id="reserve" inputmode="decimal" placeholder="0" autocomplete="off">
           <span class="unit u-lbl">LB</span>
         </div>
@@ -280,24 +341,30 @@
           <button class="emer" data-floor="emer" aria-pressed="false">EMERG <span class="ck" id="chEmer">—</span></button>
         </div>
         <div class="field full">
-          <label for="snap">Time now (Z) — optional</label>
+          <label for="snap">Time Now (Z) — Optional</label>
           <input id="snap" inputmode="numeric" placeholder="auto" autocomplete="off" maxlength="5">
-          <span class="unit">HHMM Z · blank = live</span>
+          <span class="unit">HHMM Z · Blank = Live</span>
+        </div>
+        <div class="caut-row full grid">
+          <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <label for="cautMin">Caution Threshold</label>
+            <input id="cautMin" inputmode="decimal" value="10" style="">
+            <span>MIN remaining</span>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="col-builders">
-      <div class="sec-h">Optional builders</div>
-
+      <div class="sec-h">Optional Builders</div>
       <details>
-        <summary>Build divert fuel from leg <span class="chev">›</span></summary>
+        <summary>Build Divert Fuel From Leg <span class="chev">›</span></summary>
         <div class="help-body">
           <div class="grid">
             <div class="field"><label for="dDist">Distance (NM)</label><input id="dDist" inputmode="decimal" placeholder="0"></div>
-            <div class="field"><label for="dGs">Groundspeed (kt)</label><input id="dGs" inputmode="decimal" placeholder="0"></div>
-            <div class="field"><label for="dFf">Transit FF / hr</label><input id="dFf" inputmode="decimal" placeholder="0"></div>
-            <div class="field"><label for="dAdd">Arrival allowance</label><input id="dAdd" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dGs">Groundspeed (KT)</label><input id="dGs" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dFf">Transit FF / Hr</label><input id="dFf" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dAdd">Arrival Allowance</label><input id="dAdd" inputmode="decimal" placeholder="0"></div>
           </div>
           <div class="arrchips" id="arrchips" role="group" aria-label="Arrival allowance">
             <button data-arr="final" aria-pressed="false">FINAL APP<span class="ck" id="acFinal">—</span></button>
@@ -305,54 +372,63 @@
             <button data-arr="none" aria-pressed="false">NONE<span class="ck">0</span></button>
           </div>
           <div class="help-out" id="dOut"><span>Enter leg data</span></div>
-          <button class="apply" id="dApply">Apply to divert fuel</button>
+          <button class="apply" id="dApply">Apply To Divert Fuel</button>
         </div>
       </details>
-
       <details>
-        <summary>Build reserve from time <span class="chev">›</span></summary>
+        <summary>Build Reserve From Time <span class="chev">›</span></summary>
         <div class="help-body">
           <div class="grid">
-            <div class="field"><label for="rMin">Reserve minutes</label><input id="rMin" inputmode="decimal" placeholder="0"></div>
-            <div class="field"><label for="rFf">FF / hr at reserve</label><input id="rFf" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="rMin">Reserve Minutes</label><input id="rMin" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="rFf">FF / Hr At Reserve</label><input id="rFf" inputmode="decimal" placeholder="0"></div>
           </div>
           <div class="help-out" id="rOut"><span>Enter reserve data</span></div>
-          <button class="apply" id="rApply">Apply to reserve</button>
+          <button class="apply" id="rApply">Apply To Reserve</button>
         </div>
       </details>
-
       <details class="defs">
-        <summary>Fleet definitions <span class="chev">›</span></summary>
+        <summary>Fleet Definitions <span class="chev">›</span></summary>
         <div class="help-body">
-          <b>Min fuel</b> — fuel to hold at 1,500 ft for 30 minutes plus fly one approach. 757: 4,500 lb · 767: 7,300 lb.<br><br>
-          <b>Emergency fuel</b> — fuel to initiate a missed approach at 200 ft AFE, climb to 1,500 ft AFE, proceed downwind, and fly another approach from a 10 NM point from the end of the runway; approximately 30 minutes of fuel remaining. 757: 3,500 lb · 767: 5,300 lb.<br><br>
-          <b>Final approach</b> — fuel to complete a normal approach from the final approach fix. 757: 300 lb · 767: 500 lb.<br><br>
-          <b>Go-around &amp; return</b> — fuel including final approach, based on a go-around at 200 ft AFE, climb to 1,500 ft pattern altitude, configuration and speed per go-around procedure, turn to 7 NM final, sea-level standard day, calm wind, max landing weight. 757: 2,500 lb · 767: 3,000 lb.
+          <b>Min Fuel</b> — Fuel to hold at 1,500 ft for 30 minutes plus fly one approach. 757: 4,500 lb · 767: 7,300 lb.<br><br>
+          <b>Emergency Fuel</b> — Fuel to initiate a missed approach at 200 ft AFE, climb to 1,500 ft AFE, proceed downwind, and fly another approach from a 10 NM point from the end of the runway; approximately 30 minutes of fuel remaining. 757: 3,500 lb · 767: 5,300 lb.<br><br>
+          <b>Final Approach</b> — Fuel to complete a normal approach from the final approach fix. 757: 300 lb · 767: 500 lb.<br><br>
+          <b>Go-Around &amp; Return</b> — Fuel including final approach, based on a go-around at 200 ft AFE, climb to 1,500 ft pattern altitude, configuration and speed per go-around procedure, turn to 7 NM final, sea-level standard day, calm wind, max landing weight. 757: 2,500 lb · 767: 3,000 lb.
         </div>
       </details>
     </div>
-
   </div>
 
   <div class="foot">
-    Decision tool only — verify against your aircraft data and reserves.<br>
-    Hold time assumes constant hold fuel flow. Push time = time now + max hold time.<br>
-    Hold / Bingo · v1.0
+    Decision support only — verify against approved aircraft performance data and reserves.<br>
+    Hold / Bingo · v1.2
   </div>
+</div>
 
+<!-- RESET CONFIRM MODAL -->
+<div class="reset-confirm" id="resetConfirm" role="dialog" aria-modal="true" aria-label="Confirm reset">
+  <div class="reset-box">
+    <p>Clear all fuel data and reset to defaults?</p>
+    <div class="rbtns">
+      <button class="r-cancel" id="resetCancel">CANCEL</button>
+      <button class="r-confirm" id="resetConfirmBtn">RESET</button>
+    </div>
+  </div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  const fields = ['fob','ff','divert','reserve','snap','dDist','dGs','dFf','dAdd','rMin','rFf'];
+  const FIELDS = ['fob','ff','divert','reserve','snap','dDist','dGs','dFf','dAdd','rMin','rFf'];
 
   const FLEET = {
-    '757':{unit:'LB',min:4500,emer:3500,final:300,gar:2500},
-    '767':{unit:'LB',min:7300,emer:5300,final:500,gar:3000}
+    '757':{unit:'LB',min:4500,emer:3500,final:300,gar:2500,ff:7000},
+    '767':{unit:'LB',min:7300,emer:5300,final:500,gar:3000,ff:10000}
   };
 
   let unit='LB', activeAC=null, activeFloor=null, reserveAuto=false;
+  let armed=false, firing=false, alarmFired=false, audioCtx=null, alarmTimer=null, wakeLock=null;
+  let pushTime=null, holdStartTime=null, isLocked=false, nightMode=false;
+  let cautMin=10; // caution threshold in minutes
 
   const ffUnit=()=>unit+'/HR';
   const num=v=>{const n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:NaN;};
@@ -360,14 +436,6 @@
   function fmtFuel(n){return isFinite(n)?Math.round(n).toLocaleString()+' '+unit:'—';}
   function fmtHMM(m){if(m<0)m=0;return Math.floor(m/60)+':'+pad(Math.round(m%60));}
   function setResLbl(t){document.querySelectorAll('.res-lbl').forEach(e=>e.textContent=t);}
-  function setBarState(s){
-    const seg=$('segHold'), tr=$('track'), dot=$('dotHold');
-    seg.classList.remove('caution','warn'); tr.classList.remove('caution','warn');
-    if(s==='caution'){seg.classList.add('caution');tr.classList.add('caution');dot.style.background='var(--caution)';}
-    else if(s==='warn'){seg.classList.add('warn');tr.classList.add('warn');dot.style.background='var(--warn)';}
-    else{dot.style.background='var(--go)';}
-  }
-
   function setUnitLabels(){
     document.querySelectorAll('.u-lbl').forEach(el=>{
       el.textContent = el.closest('.field').querySelector('input').id==='ff'?ffUnit():unit;
@@ -379,63 +447,79 @@
     document.querySelectorAll('.pill button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.unit===u?'true':'false'));
     setUnitLabels();
   }
+  function setBarState(s){
+    const seg=$('segHold'),tr=$('track'),dot=$('dotHold');
+    seg.classList.remove('caution','warn');tr.classList.remove('caution','warn');
+    if(s==='caution'){seg.classList.add('caution');tr.classList.add('caution');dot.style.background='var(--caution)';}
+    else if(s==='warn'){seg.classList.add('warn');tr.classList.add('warn');dot.style.background='var(--warn)';}
+    else{dot.style.background='var(--go)';}
+  }
 
-  // ---------- aircraft ----------
-  function applyAircraft(code){
+  // ---- persist aircraft selection ----
+  function savePrefs(){
+    try{localStorage.setItem('hb_ac',activeAC||'MANUAL');localStorage.setItem('hb_floor',activeFloor||'min');
+        localStorage.setItem('hb_unit',unit);localStorage.setItem('hb_cautMin',cautMin);}catch(e){}
+  }
+  function loadPrefs(){
+    try{
+      const ac=localStorage.getItem('hb_ac')||'MANUAL';
+      const fl=localStorage.getItem('hb_floor')||'min';
+      const u=localStorage.getItem('hb_unit')||'LB';
+      const cm=parseFloat(localStorage.getItem('hb_cautMin'));
+      if(isFinite(cm)&&cm>0){cautMin=cm;$('cautMin').value=cm;}
+      setUnit(u);
+      applyAircraft(ac,fl);
+    }catch(e){applyAircraft('MANUAL');}
+  }
+
+  // ---- aircraft ----
+  function applyAircraft(code, floor){
     document.querySelectorAll('.actabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ac===code?'true':'false'));
     if(code==='MANUAL'){
       activeAC=null;activeFloor=null;
-      $('fleetref').classList.remove('show');
-      $('floorchips').classList.remove('show');
-      $('arrchips').classList.remove('show');
-      setResLbl('RESERVE');
-      document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));
-      compute();return;
+      $('fleetref').classList.remove('show');$('floorchips').classList.remove('show');$('arrchips').classList.remove('show');
+      setResLbl('RESERVE');document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));
+      savePrefs();compute();return;
     }
     activeAC=code;
     const j=FLEET[code];
     setUnit('LB');
-    $('frMin').textContent=j.min.toLocaleString();
-    $('frEmer').textContent=j.emer.toLocaleString();
-    $('frFinal').textContent=j.final.toLocaleString();
-    $('frGar').textContent=j.gar.toLocaleString();
+    $('frMin').textContent=j.min.toLocaleString();$('frEmer').textContent=j.emer.toLocaleString();
+    $('frFinal').textContent=j.final.toLocaleString();$('frGar').textContent=j.gar.toLocaleString();
     $('fleetref').classList.add('show');
-    $('chMin').textContent=j.min.toLocaleString();
-    $('chEmer').textContent=j.emer.toLocaleString();
+    $('chMin').textContent=j.min.toLocaleString();$('chEmer').textContent=j.emer.toLocaleString();
     $('floorchips').classList.add('show');
-    $('acFinal').textContent='+'+j.final.toLocaleString();
-    $('acGar').textContent='+'+j.gar.toLocaleString();
+    $('acFinal').textContent='+'+j.final.toLocaleString();$('acGar').textContent='+'+j.gar.toLocaleString();
     $('arrchips').classList.add('show');
-    setFloor(activeFloor||'min');
-    syncArrChips();
-    compute();
+    // prefill FF if field is empty
+    if(!$('ff').value && j.ff){$('ff').value=j.ff;}
+    setFloor(floor || activeFloor || 'min');
+    syncArrChips();savePrefs();compute();
   }
-
   function setFloor(which){
     if(!activeAC)return;
     activeFloor=which;
     const j=FLEET[activeAC];
     document.querySelectorAll('#floorchips button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.floor===which?'true':'false'));
-    $('reserve').value = which==='emer'?j.emer:j.min;
-    reserveAuto=true;
-    setResLbl(which==='emer'?'EMERG':'MIN');
-    compute();
+    $('reserve').value=which==='emer'?j.emer:j.min;
+    reserveAuto=true;setResLbl(which==='emer'?'EMERG':'MIN');savePrefs();
   }
-
   document.querySelectorAll('.actabs button').forEach(b=>b.addEventListener('click',()=>applyAircraft(b.dataset.ac)));
-  document.querySelectorAll('#floorchips button').forEach(b=>b.addEventListener('click',()=>setFloor(b.dataset.floor)));
-
+  document.querySelectorAll('#floorchips button').forEach(b=>b.addEventListener('click',()=>{setFloor(b.dataset.floor);compute();}));
   $('reserve').addEventListener('input',()=>{
-    if(!reserveAuto){
-      activeFloor=null;
-      document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));
-      setResLbl('RESERVE');
-    }
+    if(!reserveAuto){activeFloor=null;document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));setResLbl('RESERVE');}
     reserveAuto=false;compute();
   });
 
-  document.querySelectorAll('.pill button').forEach(b=>b.addEventListener('click',()=>{setUnit(b.dataset.unit);compute();}));
+  // ---- units ----
+  document.querySelectorAll('.pill button').forEach(b=>b.addEventListener('click',()=>{setUnit(b.dataset.unit);savePrefs();compute();}));
 
+  // ---- caution threshold ----
+  $('cautMin').addEventListener('input',()=>{
+    const v=num($('cautMin').value);if(v>0){cautMin=v;savePrefs();compute();}
+  });
+
+  // ---- snapshot time ----
   function snapDate(){
     const raw=($('snap').value||'').replace(/[^0-9]/g,'');
     if(raw.length<3)return null;
@@ -449,25 +533,56 @@
     return d;
   }
 
-  let pushTime=null;
-  let armed=false, firing=false, alarmFired=false, audioCtx=null, alarmTimer=null, wakeLock=null;
+  // ---- lock / unlock ----
+  $('lockBtn').addEventListener('click',()=>{
+    isLocked=!isLocked;
+    document.body.classList.toggle('locked',isLocked);
+    $('lockBtn').textContent=isLocked?'UNLOCK':'LOCK';
+    $('lockBtn').classList.toggle('locked',isLocked);
+    if(isLocked && pushTime){holdStartTime=holdStartTime||new Date();$('elapsedBadge').classList.add('show');}
+    else{holdStartTime=null;$('elapsedBadge').classList.remove('show');}
+  });
 
+  // ---- night mode ----
+  $('nightBtn').addEventListener('click',()=>{
+    nightMode=!nightMode;
+    document.body.classList.toggle('night',nightMode);
+    $('nightBtn').classList.toggle('on',nightMode);
+    $('nightBtn').textContent=nightMode?'DAY':'NIGHT';
+  });
+
+  // ---- reset with confirm ----
+  $('reset').addEventListener('click',()=>$('resetConfirm').classList.add('show'));
+  $('resetCancel').addEventListener('click',()=>$('resetConfirm').classList.remove('show'));
+  $('resetConfirmBtn').addEventListener('click',()=>{
+    $('resetConfirm').classList.remove('show');
+    FIELDS.forEach(id=>{const e=$(id);if(e)e.value='';});
+    isLocked=false;document.body.classList.remove('locked');
+    $('lockBtn').textContent='LOCK';$('lockBtn').classList.remove('locked');
+    holdStartTime=null;$('elapsedBadge').classList.remove('show');
+    if(firing)stopAlarm();alarmFired=false;
+    if(activeAC){reserveAuto=false;setFloor(activeFloor||'min');}
+    syncArrChips();compute();
+  });
+
+  // ---- compute ----
   function compute(){
     const fob=num($('fob').value),ff=num($('ff').value),
           dv=num($('divert').value),rs=num($('reserve').value);
     const divert=isFinite(dv)?dv:0, reserve=isFinite(rs)?rs:0, bingo=divert+reserve;
+    const hasData = isFinite(fob)&&fob>0;
 
-    // BINGO hero (independent of FOB)
+    // show lock button once we have fob + ff
+    $('lockBtn').classList.toggle('show', isFinite(fob)&&fob>0&&isFinite(ff)&&ff>0);
+
+    // bingo hero
     if(bingo>0){
       $('bingoVal').textContent=Math.round(bingo).toLocaleString();
-      $('bDivert').textContent=fmtFuel(divert);
-      $('bReserve').textContent=fmtFuel(reserve);
-    }else{
-      $('bingoVal').textContent='—';$('bDivert').textContent='—';$('bReserve').textContent='—';
-    }
+      $('bDivert').textContent=fmtFuel(divert);$('bReserve').textContent=fmtFuel(reserve);
+    }else{$('bingoVal').textContent='—';$('bDivert').textContent='—';$('bReserve').textContent='—';}
 
     const bingoPanel=$('bingoPanel');bingoPanel.classList.remove('warn');
-    if(isFinite(fob)&&fob>0){
+    if(hasData){
       const holdFuel=Math.max(fob-bingo,0),total=fob,above=fob-bingo;
       $('segHold').style.width=(100*holdFuel/total)+'%';
       $('segDivert').style.width=(100*Math.min(divert,total)/total)+'%';
@@ -485,24 +600,27 @@
     }
 
     const ro=$('readout');ro.classList.remove('caution','warn');
-
     if(!isFinite(fob)||!isFinite(ff)||ff<=0){
-      $('holdTime').textContent='--:--';$('stateLabel').textContent='MAX HOLD TIME';
-      $('pushZ').textContent='--:--';$('pushL').textContent='--:--';$('cdown').textContent='--:--';
+      $('holdTime').textContent='--:--';$('holdFmt').textContent='H:MM:SS';
+      $('stateLabel').textContent='TIME TO PUSH';$('cdown').textContent='--:--';
+      $('pushZ').textContent='--:--';$('pushL').textContent='--:--';
       pushTime=null;if(firing)stopAlarm();alarmFired=false;setBarState('go');return;
     }
 
     const holdMin=((fob-bingo)/ff)*60;
     const base=snapDate()||new Date();
     pushTime=new Date(base.getTime()+Math.max(holdMin,0)*60000);
-
-    $('holdTime').textContent=fmtHMM(holdMin);
+    $('cdown').textContent=fmtHMM(holdMin);
     $('pushZ').textContent=pad(pushTime.getUTCHours())+':'+pad(pushTime.getUTCMinutes());
     $('pushL').textContent=pad(pushTime.getHours())+':'+pad(pushTime.getMinutes());
 
-    if(holdMin<=0){ro.classList.add('warn');$('stateLabel').textContent='BELOW BINGO — DEPART NOW';$('holdTime').textContent='0:00';setBarState('warn');}
-    else if(holdMin<=10){ro.classList.add('caution');$('stateLabel').textContent='CAUTION — APPROACHING BINGO';setBarState('caution');}
-    else{$('stateLabel').textContent='MAX HOLD TIME';setBarState('go');}
+    if(holdMin<=0){
+      ro.classList.add('warn');$('stateLabel').textContent='BELOW BINGO — DEPART NOW';setBarState('warn');
+    }else if(holdMin<=cautMin){
+      ro.classList.add('caution');$('stateLabel').textContent='CAUTION — APPROACHING BINGO';setBarState('caution');
+    }else{
+      $('stateLabel').textContent='TIME TO PUSH';setBarState('go');
+    }
     if(holdMin>0){if(firing)stopAlarm();alarmFired=false;}
     tickCountdown();
   }
@@ -511,50 +629,49 @@
     if(!pushTime)return;
     const rem=Math.floor((pushTime-new Date())/1000);
     if(rem<=0){
-      $('cdown').textContent='00:00';
+      $('holdTime').textContent='0:00';$('holdFmt').textContent='MIN:SEC';
       const ro=$('readout');
       if(!ro.classList.contains('warn')){ro.classList.remove('caution');ro.classList.add('warn');
-        $('stateLabel').textContent='BINGO — DEPART NOW';$('holdTime').textContent='0:00';}
+        $('stateLabel').textContent='BINGO — DEPART NOW';setBarState('warn');}
       if(armed && !alarmFired){alarmFired=true;startAlarm();}
       return;
     }
     const h=Math.floor(rem/3600),m=Math.floor((rem%3600)/60),s=rem%60;
-    $('cdown').textContent=(h>0?h+':':'')+pad(m)+':'+pad(s);
+    if(h>0){$('holdTime').textContent=h+':'+pad(m)+':'+pad(s);$('holdFmt').textContent='H:MM:SS';}
+    else{$('holdTime').textContent=pad(m)+':'+pad(s);$('holdFmt').textContent='MIN:SEC';}
+    // drive caution/warn from live countdown too
+    const remMin=rem/60;
+    const ro=$('readout');
+    if(remMin>0 && remMin<=cautMin && !ro.classList.contains('warn')){
+      ro.classList.remove('warn');ro.classList.add('caution');
+      $('stateLabel').textContent='CAUTION — APPROACHING BINGO';setBarState('caution');
+    }
   }
 
-  // ---------- push alarm (foreground only) ----------
+  // ---- alarm ----
   function ensureAudio(){
-    try{
-      if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-      if(audioCtx.state==='suspended') audioCtx.resume();
-    }catch(e){}
+    try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state==='suspended')audioCtx.resume();}catch(e){}
     return audioCtx;
   }
   function beep(freq,dur,when,vol){
     if(!audioCtx)return;
     const t=audioCtx.currentTime+(when||0);
-    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
     o.type='square';o.frequency.value=freq;
-    g.gain.setValueAtTime(0,t);
-    g.gain.linearRampToValueAtTime(vol||0.2,t+0.01);
-    g.gain.setValueAtTime(vol||0.2,t+dur-0.03);
-    g.gain.linearRampToValueAtTime(0,t+dur);
-    o.connect(g).connect(audioCtx.destination);
-    o.start(t);o.stop(t+dur+0.02);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||0.2,t+0.01);
+    g.gain.setValueAtTime(vol||0.2,t+dur-0.03);g.gain.linearRampToValueAtTime(0,t+dur);
+    o.connect(g).connect(audioCtx.destination);o.start(t);o.stop(t+dur+0.02);
   }
   function alarmBurst(){beep(760,0.13,0,0.22);beep(980,0.13,0.17,0.22);beep(1240,0.18,0.34,0.24);}
   function startAlarm(){
-    if(firing)return;
-    firing=true;ensureAudio();
-    $('readout').classList.add('firing');
-    updateAlarmBtn();alarmBurst();
+    if(firing)return;firing=true;ensureAudio();
+    $('readout').classList.add('firing');updateAlarmBtn();alarmBurst();
     alarmTimer=setInterval(alarmBurst,1300);
   }
   function stopAlarm(){
-    firing=false;
-    if(alarmTimer){clearInterval(alarmTimer);alarmTimer=null;}
-    $('readout').classList.remove('firing');
-    updateAlarmBtn();
+    firing=false;if(alarmTimer){clearInterval(alarmTimer);alarmTimer=null;}
+    $('readout').classList.remove('firing');updateAlarmBtn();
   }
   async function reqWake(){
     try{if('wakeLock' in navigator && document.visibilityState==='visible'){wakeLock=await navigator.wakeLock.request('screen');}}catch(e){}
@@ -569,13 +686,14 @@
   function arm(){armed=true;alarmFired=false;ensureAudio();beep(880,0.12,0,0.18);reqWake();updateAlarmBtn();}
   function disarm(){armed=false;stopAlarm();relWake();updateAlarmBtn();}
   $('alarmBtn').addEventListener('click',()=>{
-    if(firing){stopAlarm();alarmFired=true;return;}   // acknowledge, stay armed
+    if(firing){stopAlarm();alarmFired=true;return;}
     armed?disarm():arm();
   });
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible' && armed){ensureAudio();reqWake();}
   });
 
+  // ---- divert builder ----
   function calcDivert(){
     const dist=num($('dDist').value),gs=num($('dGs').value),
           ff=num($('dFf').value),add=num($('dAdd').value)||0;
@@ -584,19 +702,15 @@
     $('dOut').innerHTML='ETE '+fmtHMM(t*60)+' &nbsp;·&nbsp; <b>'+fmtFuel(fuel)+'</b>';
     return fuel;
   }
-  ['dDist','dGs','dFf','dAdd'].forEach(id=>$(id).addEventListener('input',()=>{calcDivert();}));
+  ['dDist','dGs','dFf','dAdd'].forEach(id=>$(id).addEventListener('input',()=>calcDivert()));
   $('dApply').addEventListener('click',()=>{const f=calcDivert();if(isFinite(f)){$('divert').value=Math.round(f);compute();}});
-
   function syncArrChips(){
-    const v=num($('dAdd').value);
-    const j=activeAC?FLEET[activeAC]:null;
+    const v=num($('dAdd').value),j=activeAC?FLEET[activeAC]:null;
     document.querySelectorAll('#arrchips button').forEach(b=>{
       let match=false;
-      if(j){
-        if(b.dataset.arr==='final')match=(v===j.final);
+      if(j){if(b.dataset.arr==='final')match=(v===j.final);
         else if(b.dataset.arr==='gar')match=(v===j.gar);
-        else if(b.dataset.arr==='none')match=(v===0||!isFinite(v));
-      }
+        else if(b.dataset.arr==='none')match=(v===0||!isFinite(v));}
       b.setAttribute('aria-pressed',match?'true':'false');
     });
   }
@@ -610,30 +724,39 @@
   });
   $('dAdd').addEventListener('input',syncArrChips);
 
+  // ---- reserve builder ----
   function calcRes(){
-    const min=num($('rMin').value),ff=num($('rFf').value);
-    if(!isFinite(min)||!isFinite(ff)){$('rOut').innerHTML='<span>Enter reserve data</span>';return NaN;}
-    const fuel=(min/60)*ff;$('rOut').innerHTML='<b>'+fmtFuel(fuel)+'</b>';return fuel;
+    const m=num($('rMin').value),ff=num($('rFf').value);
+    if(!isFinite(m)||!isFinite(ff)){$('rOut').innerHTML='<span>Enter reserve data</span>';return NaN;}
+    const fuel=(m/60)*ff;$('rOut').innerHTML='<b>'+fmtFuel(fuel)+'</b>';return fuel;
   }
   ['rMin','rFf'].forEach(id=>$(id).addEventListener('input',calcRes));
-  $('rApply').addEventListener('click',()=>{const f=calcRes();if(isFinite(f)){$('reserve').value=Math.round(f);reserveAuto=false;activeFloor=null;document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));setResLbl('RESERVE');compute();}});
-
-  ['fob','ff','divert','snap'].forEach(id=>$(id).addEventListener('input',compute));
-
-  $('reset').addEventListener('click',()=>{
-    fields.forEach(id=>{const e=$(id);if(e)e.value='';});
-    if(activeAC){reserveAuto=false;setFloor(activeFloor||'min');}
-    syncArrChips();compute();
+  $('rApply').addEventListener('click',()=>{const f=calcRes();if(isFinite(f)){
+    $('reserve').value=Math.round(f);reserveAuto=false;activeFloor=null;
+    document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    setResLbl('RESERVE');compute();}
   });
 
+  // ---- main input wiring ----
+  ['fob','ff','divert','snap'].forEach(id=>$(id).addEventListener('input',compute));
+
+  // ---- elapsed hold timer ----
+  function tickElapsed(){
+    if(!holdStartTime){return;}
+    const sec=Math.floor((new Date()-holdStartTime)/1000);
+    const m=Math.floor(sec/60),s=sec%60;
+    $('elapsedVal').textContent=pad(m)+':'+pad(s);
+  }
+
+  // ---- clocks ----
   function clocks(){
     const z=new Date();
     $('clockZ').textContent=pad(z.getUTCHours())+':'+pad(z.getUTCMinutes())+':'+pad(z.getUTCSeconds());
-    tickCountdown();
+    tickCountdown();tickElapsed();
   }
   setInterval(clocks,1000);clocks();
 
-  setUnitLabels();compute();
+  setUnitLabels();loadPrefs();
 })();
 </script>
 <script>

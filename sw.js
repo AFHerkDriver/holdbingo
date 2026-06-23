@@ -1,5 +1,5 @@
-/* Hold/Bingo service worker — offline app shell cache */
-const CACHE = 'holdbingo-v5';
+/* Hold/Bingo service worker — offline app shell, fresh-when-online */
+const CACHE = 'holdbingo-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -26,22 +26,37 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
+
+  const isPage = req.mode === 'navigate' ||
+                 req.destination === 'document' ||
+                 req.url.endsWith('/') ||
+                 req.url.endsWith('index.html');
+
+  if (isPage) {
+    // Network-first: latest version when online, cached copy when offline.
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put('./index.html', copy));
+          return res;
+        })
+        .catch(() => caches.match('./index.html').then((hit) => hit || caches.match('./')))
+    );
+    return;
+  }
+
+  // Static assets: cache-first, fall back to network and cache it.
   e.respondWith(
     caches.match(req).then((hit) => {
       if (hit) return hit;
-      return fetch(req)
-        .then((res) => {
-          // cache same-origin successful responses for next time
-          if (res && res.status === 200 && req.url.startsWith(self.location.origin)) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => {
-          // offline fallback: serve the app shell for navigations
-          if (req.mode === 'navigate') return caches.match('./index.html');
-        });
+      return fetch(req).then((res) => {
+        if (res && res.status === 200 && req.url.startsWith(self.location.origin)) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
+        return res;
+      }).catch(() => undefined);
     })
   );
 });

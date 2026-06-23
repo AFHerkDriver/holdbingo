@@ -1,6 +1,6 @@
 # Hold / Bingo Calculator
 
-**Version 1.0** · Installable, offline-first EFB tool for the 757 / 767.
+**Version 1.1** · Installable, offline-first EFB tool for the 757 / 767.
 
 **Live:** https://afherkdriver.github.io/holdbingo/
 
