@@ -1,0 +1,15 @@
+{
+  "name": "Hold / Bingo Calculator",
+  "short_name": "Hold/Bingo",
+  "description": "Holding and bingo fuel / divert decision tool for 757/767.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070d0b",
+  "theme_color": "#070d0b",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

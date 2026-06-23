@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d0b">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hold/Bingo">
+<title>HOLD / BINGO</title>
+<style>
+  :root{
+    --bg:#070d0b;--panel:#0d1715;--panel-2:#10201c;--line:#1c2e29;
+    --txt:#dff3ec;--muted:#5f7a72;
+    --go:#1fe08a;--caution:#ffb000;--warn:#ff3b30;
+    --go-dim:#0e3327;--caution-dim:#352700;--warn-dim:#3a1210;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(120% 70% at 50% -8%, #0c1a16 0%, var(--bg) 60%) fixed;
+    color:var(--txt);font-family:var(--sans);-webkit-text-size-adjust:100%;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    min-height:100vh;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:16px 18px 48px}
+
+  .bar{display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:1px solid var(--line);padding:4px 2px 13px;margin-bottom:15px}
+  .bar h1{font-size:16px;font-weight:700;letter-spacing:.24em;margin:0;color:var(--go)}
+  .bar h1 .slash{color:var(--muted)}
+  .zulu{font-family:var(--mono);font-size:14px;color:var(--muted);letter-spacing:.06em}
+  .zulu b{color:var(--txt);font-weight:500}
+
+  /* aircraft tabs */
+  .actabs{display:flex;gap:8px;margin-bottom:13px}
+  .actabs button{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    color:var(--muted);font-family:var(--mono);font-size:16px;font-weight:700;padding:13px 0;cursor:pointer;letter-spacing:.08em}
+  .actabs button[aria-pressed="true"]{background:var(--go-dim);color:var(--go);border-color:#1c5c45}
+  .actabs button .sm{display:block;font-size:9px;letter-spacing:.16em;color:var(--muted);font-weight:600;margin-top:2px}
+  .actabs button[aria-pressed="true"] .sm{color:#3fae84}
+
+  /* ---- HERO BAND ---- */
+  .herorow{display:flex;flex-direction:column;gap:12px}
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:20px 18px 18px;text-align:center;position:relative;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:center}
+  .state-label{font-size:11px;letter-spacing:.32em;font-weight:700;color:var(--muted);
+    margin-bottom:9px;text-transform:uppercase}
+  .bignum{font-family:var(--mono);font-weight:700;line-height:.92;letter-spacing:-.01em;
+    font-variant-numeric:tabular-nums}
+  .holdtime{font-size:clamp(54px,11vw,112px);color:var(--go);text-shadow:0 0 24px rgba(31,224,138,.25)}
+  .holdtime .u{font-size:.32em;letter-spacing:.18em;color:var(--muted);margin-left:.14em;text-shadow:none}
+  .bingoNum{font-size:clamp(48px,10vw,100px);color:var(--txt)}
+  .bingoNum .u{font-size:.30em;letter-spacing:.16em;color:var(--muted);margin-left:.14em}
+  .sub{display:flex;justify-content:center;gap:26px;margin-top:16px;
+    font-family:var(--mono);font-size:14px;color:var(--muted);flex-wrap:wrap}
+  .sub .k{display:block;font-size:9.5px;letter-spacing:.18em;margin-bottom:3px}
+  .sub b{color:var(--txt);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums}
+
+  .readout.caution .holdtime{color:var(--caution);text-shadow:0 0 24px rgba(255,176,0,.25)}
+  .readout.caution .state-label{color:var(--caution)}
+  .hero.warn{animation:pulse 1.1s ease-in-out infinite}
+  .readout.warn .holdtime{color:var(--warn);text-shadow:0 0 24px rgba(255,59,48,.3)}
+  .readout.warn .state-label{color:var(--warn)}
+  .bingo.warn .bingoNum{color:var(--warn);text-shadow:0 0 24px rgba(255,59,48,.3)}
+  .bingo.warn .state-label{color:var(--warn)}
+  @keyframes pulse{50%{border-color:var(--warn)}}
+
+  .alarmbar{display:block;width:100%;margin-top:13px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;color:var(--muted);font-family:var(--mono);font-size:14px;font-weight:700;
+    letter-spacing:.18em;padding:14px;cursor:pointer;text-align:center}
+  .alarmbar[data-state="armed"]{background:var(--go-dim);color:var(--go);border-color:#1c5c45}
+  .alarmbar[data-state="firing"]{background:var(--warn-dim);color:var(--warn);border-color:var(--warn);animation:pulse .65s ease-in-out infinite}
+  .alarm-note{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:.03em;line-height:1.4}
+  .readout.firing{animation:pulse .6s ease-in-out infinite;border-color:var(--warn)}
+
+  /* fleet ref */
+  .fleetref{display:none;margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .fleetref.show{display:block}
+  .fleetref .fr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center}
+  .fleetref .fr-grid>div .k{font-size:9px;letter-spacing:.12em;color:var(--muted);display:block;margin-bottom:3px}
+  .fleetref .fr-grid>div b{font-family:var(--mono);font-size:17px;color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+  .fleetref .fr-grid>div.emer b{color:var(--caution)}
+
+  /* fuel bar */
+  .fuelbar{margin:14px 0 4px}
+  .track{height:18px;border-radius:9px;background:#08110e;border:1px solid var(--line);display:flex;overflow:hidden}
+  .seg{height:100%}
+  .seg.hold{background:linear-gradient(180deg,#27f29a,#13b56c)}
+  .seg.divert{background:linear-gradient(180deg,#ffc23d,#d99200)}
+  .seg.reserve{background:linear-gradient(180deg,#ff5b52,#cc2b22)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .dot.hold{background:var(--go)}.dot.divert{background:var(--caution)}.dot.reserve{background:var(--warn)}
+  .legend b{color:var(--txt);font-weight:600}
+
+  /* lower two-column area */
+  .lower{display:grid;grid-template-columns:1fr;gap:18px;margin-top:20px}
+  .sec-h{font-size:10px;letter-spacing:.24em;color:var(--muted);font-weight:700;margin:0 2px 10px;text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px 9px;display:flex;flex-direction:column}
+  .field.full{grid-column:1 / -1}
+  .field label{font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+  .field input{background:transparent;border:0;color:var(--txt);font-family:var(--mono);
+    font-size:22px;font-weight:600;width:100%;padding:1px 0;outline:none;font-variant-numeric:tabular-nums}
+  .field input::placeholder{color:#314540}
+  .field:focus-within{border-color:var(--go);box-shadow:0 0 0 1px rgba(31,224,138,.25)}
+  .field .unit{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;letter-spacing:.08em}
+
+  .floorchips{display:none;grid-column:1 / -1;gap:8px;margin-top:-2px}
+  .floorchips.show{display:flex}
+  .floorchips button{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    color:var(--muted);font-family:var(--mono);font-size:13px;font-weight:600;padding:10px 0;cursor:pointer;letter-spacing:.04em}
+  .floorchips button[aria-pressed="true"]{background:var(--go-dim);color:var(--go);border-color:#1c5c45}
+  .floorchips button.emer[aria-pressed="true"]{background:var(--caution-dim);color:var(--caution);border-color:#5c4400}
+  .floorchips .ck{font-size:9px;letter-spacing:.14em;display:block;color:inherit;opacity:.75}
+
+  .toprow{display:flex;gap:10px;align-items:stretch;margin-bottom:10px}
+  .pill{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px;flex:1}
+  .pill button{flex:1;background:transparent;border:0;color:var(--muted);font-family:var(--mono);
+    font-size:13px;font-weight:600;padding:9px 0;border-radius:9px;cursor:pointer;letter-spacing:.05em}
+  .pill button[aria-pressed="true"]{background:var(--go-dim);color:var(--go)}
+  .btn-reset{background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--muted);
+    font-family:var(--mono);font-size:12px;padding:0 18px;cursor:pointer;letter-spacing:.1em}
+  .btn-reset:active{background:var(--panel-2)}
+
+  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:10px;overflow:hidden}
+  summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:12.5px;color:var(--muted);
+    font-family:var(--mono);letter-spacing:.06em;display:flex;justify-content:space-between;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary .chev{transition:transform .2s}
+  details[open] summary .chev{transform:rotate(90deg)}
+  details[open] summary{color:var(--txt);border-bottom:1px solid var(--line)}
+  .help-body{padding:12px 14px 14px}
+  .help-body .grid{margin-bottom:10px}
+  .arrchips{display:none;gap:8px;margin-bottom:10px}
+  .arrchips.show{display:flex}
+  .arrchips button{flex:1;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    color:var(--txt);font-family:var(--mono);font-size:12px;font-weight:600;padding:10px 4px;cursor:pointer;letter-spacing:.02em}
+  .arrchips button[aria-pressed="true"]{background:var(--go-dim);color:var(--go);border-color:#1c5c45}
+  .arrchips .ck{display:block;font-size:9px;color:var(--muted);margin-top:2px}
+  .arrchips button[aria-pressed="true"] .ck{color:#3fae84}
+  .apply{width:100%;background:var(--go-dim);border:1px solid #1c5c45;color:var(--go);
+    font-family:var(--mono);font-size:13px;font-weight:600;padding:11px;border-radius:10px;cursor:pointer;letter-spacing:.08em}
+  .apply:active{background:#124032}
+  .help-out{font-family:var(--mono);font-size:13px;color:var(--txt);text-align:center;margin-bottom:10px;min-height:18px}
+  .help-out span{color:var(--muted)}
+  .defs .help-body{font-family:var(--sans);font-size:12px;color:var(--muted);line-height:1.6}
+  .defs b{color:var(--txt);font-weight:600}
+
+  .foot{margin-top:24px;font-size:11px;color:var(--muted);line-height:1.5;text-align:center;font-family:var(--mono);letter-spacing:.02em}
+  :focus-visible{outline:2px solid var(--go);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){.hero.warn{animation:none;border-color:var(--warn)}}
+
+  /* ---- iPad / wide ---- */
+  @media(min-width:760px){
+    .herorow{flex-direction:row}
+    .herorow>.hero{flex:1}
+    .lower{grid-template-columns:1.12fr .88fr;gap:22px;align-items:start}
+    .field input{font-size:24px}
+    .field{padding:12px 14px 10px}
+    .actabs button{font-size:18px;padding:15px 0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="bar">
+    <h1>HOLD <span class="slash">/</span> BINGO</h1>
+    <div class="zulu">NOW <b id="clockZ">--:--</b>Z</div>
+  </div>
+
+  <!-- AIRCRAFT -->
+  <div class="actabs" role="group" aria-label="Aircraft">
+    <button data-ac="757" aria-pressed="false">757</button>
+    <button data-ac="767" aria-pressed="false">767</button>
+    <button data-ac="MANUAL" aria-pressed="true">MANUAL</button>
+  </div>
+
+  <!-- HERO BAND -->
+  <div class="herorow">
+    <div class="readout hero" id="readout">
+      <div class="state-label" id="stateLabel">MAX HOLD TIME</div>
+      <div class="bignum holdtime"><span id="holdTime">--:--</span><span class="u">H:MM</span></div>
+      <div class="sub">
+        <div><span class="k">PUSH (Z)</span><b id="pushZ">--:--</b></div>
+        <div><span class="k">PUSH (LCL)</span><b id="pushL">--:--</b></div>
+        <div><span class="k">COUNTDOWN</span><b id="cdown">--:--</b></div>
+      </div>
+    </div>
+
+    <div class="bingo hero" id="bingoPanel">
+      <div class="state-label">BINGO FUEL</div>
+      <div class="bignum bingoNum"><span id="bingoVal">—</span><span class="u" id="bingoUnit">LB</span></div>
+      <div class="sub">
+        <div><span class="k">DIVERT</span><b id="bDivert">—</b></div>
+        <div><span class="k"><span class="res-lbl">RESERVE</span></span><b id="bReserve">—</b></div>
+        <div><span class="k">ABOVE BINGO</span><b id="bAbove">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUSH ALARM -->
+  <button class="alarmbar" id="alarmBtn" data-state="off" aria-pressed="false">ALARM OFF</button>
+  <div class="alarm-note">Chimes at hold-time expiration. Keep the app in the foreground; screen stays awake while armed.</div>
+
+  <!-- FLEET REFERENCE -->
+  <div class="fleetref" id="fleetref">
+    <div class="fr-grid">
+      <div><span class="k">MIN</span><b id="frMin">—</b></div>
+      <div class="emer"><span class="k">EMERG</span><b id="frEmer">—</b></div>
+      <div><span class="k">FINAL APP</span><b id="frFinal">—</b></div>
+      <div><span class="k">GA &amp; RTN</span><b id="frGar">—</b></div>
+    </div>
+  </div>
+
+  <!-- FUEL BAR -->
+  <div class="fuelbar">
+    <div class="track" id="track">
+      <div class="seg hold" id="segHold" style="width:0%"></div>
+      <div class="seg divert" id="segDivert" style="width:0%"></div>
+      <div class="seg reserve" id="segReserve" style="width:0%"></div>
+    </div>
+    <div class="legend">
+      <span><i class="dot hold"></i>HOLD <b id="lgHold">—</b></span>
+      <span><i class="dot divert"></i>DIVERT <b id="lgDivert">—</b></span>
+      <span><i class="dot reserve"></i><span class="res-lbl">RESERVE</span> <b id="lgReserve">—</b></span>
+      <span>BINGO <b id="lgBingo">—</b></span>
+    </div>
+  </div>
+
+  <!-- LOWER: inputs | builders -->
+  <div class="lower">
+
+    <div class="col-inputs">
+      <div class="sec-h">Fuel state</div>
+      <div class="toprow">
+        <div class="pill" role="group" aria-label="Fuel units">
+          <button data-unit="LB" aria-pressed="true">LB</button>
+          <button data-unit="KG" aria-pressed="false">KG</button>
+          <button data-unit="GAL" aria-pressed="false">GAL</button>
+        </div>
+        <button class="btn-reset" id="reset">RESET</button>
+      </div>
+      <div class="grid">
+        <div class="field full">
+          <label for="fob">Fuel on board (now)</label>
+          <input id="fob" inputmode="decimal" placeholder="0" autocomplete="off">
+          <span class="unit u-lbl">LB</span>
+        </div>
+        <div class="field">
+          <label for="ff">Hold fuel flow / hr</label>
+          <input id="ff" inputmode="decimal" placeholder="0" autocomplete="off">
+          <span class="unit u-lbl">LB/HR</span>
+        </div>
+        <div class="field">
+          <label for="divert">Divert fuel req</label>
+          <input id="divert" inputmode="decimal" placeholder="0" autocomplete="off">
+          <span class="unit u-lbl">LB</span>
+        </div>
+        <div class="field full">
+          <label for="reserve">Reserve / floor (land with)</label>
+          <input id="reserve" inputmode="decimal" placeholder="0" autocomplete="off">
+          <span class="unit u-lbl">LB</span>
+        </div>
+        <div class="floorchips" id="floorchips" role="group" aria-label="Reserve floor">
+          <button data-floor="min" aria-pressed="false">MIN <span class="ck" id="chMin">—</span></button>
+          <button class="emer" data-floor="emer" aria-pressed="false">EMERG <span class="ck" id="chEmer">—</span></button>
+        </div>
+        <div class="field full">
+          <label for="snap">Time now (Z) — optional</label>
+          <input id="snap" inputmode="numeric" placeholder="auto" autocomplete="off" maxlength="5">
+          <span class="unit">HHMM Z · blank = live</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-builders">
+      <div class="sec-h">Optional builders</div>
+
+      <details>
+        <summary>Build divert fuel from leg <span class="chev">›</span></summary>
+        <div class="help-body">
+          <div class="grid">
+            <div class="field"><label for="dDist">Distance (NM)</label><input id="dDist" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dGs">Groundspeed (kt)</label><input id="dGs" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dFf">Transit FF / hr</label><input id="dFf" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dAdd">Arrival allowance</label><input id="dAdd" inputmode="decimal" placeholder="0"></div>
+          </div>
+          <div class="arrchips" id="arrchips" role="group" aria-label="Arrival allowance">
+            <button data-arr="final" aria-pressed="false">FINAL APP<span class="ck" id="acFinal">—</span></button>
+            <button data-arr="gar" aria-pressed="false">GA &amp; RTN<span class="ck" id="acGar">—</span></button>
+            <button data-arr="none" aria-pressed="false">NONE<span class="ck">0</span></button>
+          </div>
+          <div class="help-out" id="dOut"><span>Enter leg data</span></div>
+          <button class="apply" id="dApply">Apply to divert fuel</button>
+        </div>
+      </details>
+
+      <details>
+        <summary>Build reserve from time <span class="chev">›</span></summary>
+        <div class="help-body">
+          <div class="grid">
+            <div class="field"><label for="rMin">Reserve minutes</label><input id="rMin" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="rFf">FF / hr at reserve</label><input id="rFf" inputmode="decimal" placeholder="0"></div>
+          </div>
+          <div class="help-out" id="rOut"><span>Enter reserve data</span></div>
+          <button class="apply" id="rApply">Apply to reserve</button>
+        </div>
+      </details>
+
+      <details class="defs">
+        <summary>Fleet definitions <span class="chev">›</span></summary>
+        <div class="help-body">
+          <b>Min fuel</b> — fuel to hold at 1,500 ft for 30 minutes plus fly one approach. 757: 4,500 lb · 767: 7,300 lb.<br><br>
+          <b>Emergency fuel</b> — fuel to initiate a missed approach at 200 ft AFE, climb to 1,500 ft AFE, proceed downwind, and fly another approach from a 10 NM point from the end of the runway; approximately 30 minutes of fuel remaining. 757: 3,500 lb · 767: 5,300 lb.<br><br>
+          <b>Final approach</b> — fuel to complete a normal approach from the final approach fix. 757: 300 lb · 767: 500 lb.<br><br>
+          <b>Go-around &amp; return</b> — fuel including final approach, based on a go-around at 200 ft AFE, climb to 1,500 ft pattern altitude, configuration and speed per go-around procedure, turn to 7 NM final, sea-level standard day, calm wind, max landing weight. 757: 2,500 lb · 767: 3,000 lb.
+        </div>
+      </details>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    Decision tool only — verify against your aircraft data and reserves.<br>
+    Hold time assumes constant hold fuel flow. Push time = time now + max hold time.
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fields = ['fob','ff','divert','reserve','snap','dDist','dGs','dFf','dAdd','rMin','rFf'];
+
+  const FLEET = {
+    '757':{unit:'LB',min:4500,emer:3500,final:300,gar:2500},
+    '767':{unit:'LB',min:7300,emer:5300,final:500,gar:3000}
+  };
+
+  let unit='LB', activeAC=null, activeFloor=null, reserveAuto=false;
+
+  const ffUnit=()=>unit+'/HR';
+  const num=v=>{const n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:NaN;};
+  const pad=n=>String(n).padStart(2,'0');
+  function fmtFuel(n){return isFinite(n)?Math.round(n).toLocaleString()+' '+unit:'—';}
+  function fmtHMM(m){if(m<0)m=0;return Math.floor(m/60)+':'+pad(Math.round(m%60));}
+  function setResLbl(t){document.querySelectorAll('.res-lbl').forEach(e=>e.textContent=t);}
+
+  function setUnitLabels(){
+    document.querySelectorAll('.u-lbl').forEach(el=>{
+      el.textContent = el.closest('.field').querySelector('input').id==='ff'?ffUnit():unit;
+    });
+    $('bingoUnit').textContent=unit;
+  }
+  function setUnit(u){
+    unit=u;
+    document.querySelectorAll('.pill button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.unit===u?'true':'false'));
+    setUnitLabels();
+  }
+
+  // ---------- aircraft ----------
+  function applyAircraft(code){
+    document.querySelectorAll('.actabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ac===code?'true':'false'));
+    if(code==='MANUAL'){
+      activeAC=null;activeFloor=null;
+      $('fleetref').classList.remove('show');
+      $('floorchips').classList.remove('show');
+      $('arrchips').classList.remove('show');
+      setResLbl('RESERVE');
+      document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));
+      compute();return;
+    }
+    activeAC=code;
+    const j=FLEET[code];
+    setUnit('LB');
+    $('frMin').textContent=j.min.toLocaleString();
+    $('frEmer').textContent=j.emer.toLocaleString();
+    $('frFinal').textContent=j.final.toLocaleString();
+    $('frGar').textContent=j.gar.toLocaleString();
+    $('fleetref').classList.add('show');
+    $('chMin').textContent=j.min.toLocaleString();
+    $('chEmer').textContent=j.emer.toLocaleString();
+    $('floorchips').classList.add('show');
+    $('acFinal').textContent='+'+j.final.toLocaleString();
+    $('acGar').textContent='+'+j.gar.toLocaleString();
+    $('arrchips').classList.add('show');
+    setFloor(activeFloor||'min');
+    syncArrChips();
+    compute();
+  }
+
+  function setFloor(which){
+    if(!activeAC)return;
+    activeFloor=which;
+    const j=FLEET[activeAC];
+    document.querySelectorAll('#floorchips button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.floor===which?'true':'false'));
+    $('reserve').value = which==='emer'?j.emer:j.min;
+    reserveAuto=true;
+    setResLbl(which==='emer'?'EMERG':'MIN');
+    compute();
+  }
+
+  document.querySelectorAll('.actabs button').forEach(b=>b.addEventListener('click',()=>applyAircraft(b.dataset.ac)));
+  document.querySelectorAll('#floorchips button').forEach(b=>b.addEventListener('click',()=>setFloor(b.dataset.floor)));
+
+  $('reserve').addEventListener('input',()=>{
+    if(!reserveAuto){
+      activeFloor=null;
+      document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));
+      setResLbl('RESERVE');
+    }
+    reserveAuto=false;compute();
+  });
+
+  document.querySelectorAll('.pill button').forEach(b=>b.addEventListener('click',()=>{setUnit(b.dataset.unit);compute();}));
+
+  function snapDate(){
+    const raw=($('snap').value||'').replace(/[^0-9]/g,'');
+    if(raw.length<3)return null;
+    let hh,mm;
+    if(raw.length===3){hh=+raw.slice(0,1);mm=+raw.slice(1);}
+    else{hh=+raw.slice(0,2);mm=+raw.slice(2,4);}
+    if(hh>23||mm>59)return null;
+    const now=new Date();
+    const d=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),hh,mm,0));
+    if(d-now>12*3600*1000)d.setUTCDate(d.getUTCDate()-1);
+    return d;
+  }
+
+  let pushTime=null;
+  let armed=false, firing=false, alarmFired=false, audioCtx=null, alarmTimer=null, wakeLock=null;
+
+  function compute(){
+    const fob=num($('fob').value),ff=num($('ff').value),
+          dv=num($('divert').value),rs=num($('reserve').value);
+    const divert=isFinite(dv)?dv:0, reserve=isFinite(rs)?rs:0, bingo=divert+reserve;
+
+    // BINGO hero (independent of FOB)
+    if(bingo>0){
+      $('bingoVal').textContent=Math.round(bingo).toLocaleString();
+      $('bDivert').textContent=fmtFuel(divert);
+      $('bReserve').textContent=fmtFuel(reserve);
+    }else{
+      $('bingoVal').textContent='—';$('bDivert').textContent='—';$('bReserve').textContent='—';
+    }
+
+    const bingoPanel=$('bingoPanel');bingoPanel.classList.remove('warn');
+    if(isFinite(fob)&&fob>0){
+      const holdFuel=Math.max(fob-bingo,0),total=fob,above=fob-bingo;
+      $('segHold').style.width=(100*holdFuel/total)+'%';
+      $('segDivert').style.width=(100*Math.min(divert,total)/total)+'%';
+      $('segReserve').style.width=(100*Math.min(reserve,Math.max(total-divert,0))/total)+'%';
+      $('lgHold').textContent=fmtFuel(holdFuel);
+      $('lgDivert').textContent=fmtFuel(divert);
+      $('lgReserve').textContent=fmtFuel(reserve);
+      $('lgBingo').textContent=fmtFuel(bingo);
+      $('bAbove').textContent=fmtFuel(Math.max(above,0));
+      if(above<0)bingoPanel.classList.add('warn');
+    }else{
+      ['segHold','segDivert','segReserve'].forEach(s=>$(s).style.width='0%');
+      ['lgHold','lgDivert','lgReserve','lgBingo'].forEach(l=>$(l).textContent='—');
+      $('bAbove').textContent='—';
+    }
+
+    const ro=$('readout');ro.classList.remove('caution','warn');
+
+    if(!isFinite(fob)||!isFinite(ff)||ff<=0){
+      $('holdTime').textContent='--:--';$('stateLabel').textContent='MAX HOLD TIME';
+      $('pushZ').textContent='--:--';$('pushL').textContent='--:--';$('cdown').textContent='--:--';
+      pushTime=null;if(firing)stopAlarm();alarmFired=false;return;
+    }
+
+    const holdMin=((fob-bingo)/ff)*60;
+    const base=snapDate()||new Date();
+    pushTime=new Date(base.getTime()+Math.max(holdMin,0)*60000);
+
+    $('holdTime').textContent=fmtHMM(holdMin);
+    $('pushZ').textContent=pad(pushTime.getUTCHours())+':'+pad(pushTime.getUTCMinutes());
+    $('pushL').textContent=pad(pushTime.getHours())+':'+pad(pushTime.getMinutes());
+
+    if(holdMin<=0){ro.classList.add('warn');$('stateLabel').textContent='BELOW BINGO — DEPART NOW';$('holdTime').textContent='0:00';}
+    else if(holdMin<=10){ro.classList.add('caution');$('stateLabel').textContent='CAUTION — APPROACHING BINGO';}
+    else{$('stateLabel').textContent='MAX HOLD TIME';}
+    if(holdMin>0){if(firing)stopAlarm();alarmFired=false;}
+    tickCountdown();
+  }
+
+  function tickCountdown(){
+    if(!pushTime)return;
+    const rem=Math.floor((pushTime-new Date())/1000);
+    if(rem<=0){
+      $('cdown').textContent='00:00';
+      const ro=$('readout');
+      if(!ro.classList.contains('warn')){ro.classList.remove('caution');ro.classList.add('warn');
+        $('stateLabel').textContent='BINGO — DEPART NOW';$('holdTime').textContent='0:00';}
+      if(armed && !alarmFired){alarmFired=true;startAlarm();}
+      return;
+    }
+    const h=Math.floor(rem/3600),m=Math.floor((rem%3600)/60),s=rem%60;
+    $('cdown').textContent=(h>0?h+':':'')+pad(m)+':'+pad(s);
+  }
+
+  // ---------- push alarm (foreground only) ----------
+  function ensureAudio(){
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state==='suspended') audioCtx.resume();
+    }catch(e){}
+    return audioCtx;
+  }
+  function beep(freq,dur,when,vol){
+    if(!audioCtx)return;
+    const t=audioCtx.currentTime+(when||0);
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type='square';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol||0.2,t+0.01);
+    g.gain.setValueAtTime(vol||0.2,t+dur-0.03);
+    g.gain.linearRampToValueAtTime(0,t+dur);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(t);o.stop(t+dur+0.02);
+  }
+  function alarmBurst(){beep(760,0.13,0,0.22);beep(980,0.13,0.17,0.22);beep(1240,0.18,0.34,0.24);}
+  function startAlarm(){
+    if(firing)return;
+    firing=true;ensureAudio();
+    $('readout').classList.add('firing');
+    updateAlarmBtn();alarmBurst();
+    alarmTimer=setInterval(alarmBurst,1300);
+  }
+  function stopAlarm(){
+    firing=false;
+    if(alarmTimer){clearInterval(alarmTimer);alarmTimer=null;}
+    $('readout').classList.remove('firing');
+    updateAlarmBtn();
+  }
+  async function reqWake(){
+    try{if('wakeLock' in navigator && document.visibilityState==='visible'){wakeLock=await navigator.wakeLock.request('screen');}}catch(e){}
+  }
+  function relWake(){try{if(wakeLock){wakeLock.release();wakeLock=null;}}catch(e){}}
+  function updateAlarmBtn(){
+    const b=$('alarmBtn');
+    if(firing){b.textContent='SILENCE';b.dataset.state='firing';b.setAttribute('aria-pressed','true');}
+    else if(armed){b.textContent='ALARM ARMED';b.dataset.state='armed';b.setAttribute('aria-pressed','true');}
+    else{b.textContent='ALARM OFF';b.dataset.state='off';b.setAttribute('aria-pressed','false');}
+  }
+  function arm(){armed=true;alarmFired=false;ensureAudio();beep(880,0.12,0,0.18);reqWake();updateAlarmBtn();}
+  function disarm(){armed=false;stopAlarm();relWake();updateAlarmBtn();}
+  $('alarmBtn').addEventListener('click',()=>{
+    if(firing){stopAlarm();alarmFired=true;return;}   // acknowledge, stay armed
+    armed?disarm():arm();
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible' && armed){ensureAudio();reqWake();}
+  });
+
+  function calcDivert(){
+    const dist=num($('dDist').value),gs=num($('dGs').value),
+          ff=num($('dFf').value),add=num($('dAdd').value)||0;
+    if(!isFinite(dist)||!isFinite(gs)||gs<=0||!isFinite(ff)){$('dOut').innerHTML='<span>Enter leg data</span>';return NaN;}
+    const t=dist/gs,fuel=t*ff+add;
+    $('dOut').innerHTML='ETE '+fmtHMM(t*60)+' &nbsp;·&nbsp; <b>'+fmtFuel(fuel)+'</b>';
+    return fuel;
+  }
+  ['dDist','dGs','dFf','dAdd'].forEach(id=>$(id).addEventListener('input',()=>{calcDivert();}));
+  $('dApply').addEventListener('click',()=>{const f=calcDivert();if(isFinite(f)){$('divert').value=Math.round(f);compute();}});
+
+  function syncArrChips(){
+    const v=num($('dAdd').value);
+    const j=activeAC?FLEET[activeAC]:null;
+    document.querySelectorAll('#arrchips button').forEach(b=>{
+      let match=false;
+      if(j){
+        if(b.dataset.arr==='final')match=(v===j.final);
+        else if(b.dataset.arr==='gar')match=(v===j.gar);
+        else if(b.dataset.arr==='none')match=(v===0||!isFinite(v));
+      }
+      b.setAttribute('aria-pressed',match?'true':'false');
+    });
+  }
+  document.querySelectorAll('#arrchips button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(!activeAC)return;
+      const j=FLEET[activeAC];
+      const val=b.dataset.arr==='final'?j.final:b.dataset.arr==='gar'?j.gar:0;
+      $('dAdd').value=val;calcDivert();syncArrChips();
+    });
+  });
+  $('dAdd').addEventListener('input',syncArrChips);
+
+  function calcRes(){
+    const min=num($('rMin').value),ff=num($('rFf').value);
+    if(!isFinite(min)||!isFinite(ff)){$('rOut').innerHTML='<span>Enter reserve data</span>';return NaN;}
+    const fuel=(min/60)*ff;$('rOut').innerHTML='<b>'+fmtFuel(fuel)+'</b>';return fuel;
+  }
+  ['rMin','rFf'].forEach(id=>$(id).addEventListener('input',calcRes));
+  $('rApply').addEventListener('click',()=>{const f=calcRes();if(isFinite(f)){$('reserve').value=Math.round(f);reserveAuto=false;activeFloor=null;document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));setResLbl('RESERVE');compute();}});
+
+  ['fob','ff','divert','snap'].forEach(id=>$(id).addEventListener('input',compute));
+
+  $('reset').addEventListener('click',()=>{
+    fields.forEach(id=>{const e=$(id);if(e)e.value='';});
+    if(activeAC){reserveAuto=false;setFloor(activeFloor||'min');}
+    syncArrChips();compute();
+  });
+
+  function clocks(){
+    const z=new Date();
+    $('clockZ').textContent=pad(z.getUTCHours())+':'+pad(z.getUTCMinutes())+':'+pad(z.getUTCSeconds());
+    tickCountdown();
+  }
+  setInterval(clocks,1000);clocks();
+
+  setUnitLabels();compute();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(e){console.log('SW reg failed',e);});
+  });
+}
+</script>
+</body>
+</html>
