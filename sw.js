@@ -1,5 +1,5 @@
 /* Hold/Bingo service worker — offline app shell cache */
-const CACHE = 'holdbingo-v4';
+const CACHE = 'holdbingo-v5';
 const ASSETS = [
   './',
   './index.html',

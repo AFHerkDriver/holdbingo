@@ -90,11 +90,15 @@
 
   /* fuel bar */
   .fuelbar{margin:14px 0 4px}
-  .track{height:18px;border-radius:9px;background:#08110e;border:1px solid var(--line);display:flex;overflow:hidden}
-  .seg{height:100%}
+  .track{height:18px;border-radius:9px;background:#08110e;border:1px solid var(--line);display:flex;overflow:hidden;transition:box-shadow .25s}
+  .seg{height:100%;transition:width .3s ease,background .3s ease;box-shadow:inset -1.5px 0 0 rgba(8,17,14,.85)}
   .seg.hold{background:linear-gradient(180deg,#27f29a,#13b56c)}
+  .seg.hold.caution{background:linear-gradient(180deg,#ffd24a,#e09400)}
+  .seg.hold.warn{background:linear-gradient(180deg,#ff5b52,#cc2b22)}
   .seg.divert{background:linear-gradient(180deg,#ffc23d,#d99200)}
   .seg.reserve{background:linear-gradient(180deg,#ff5b52,#cc2b22)}
+  .track.caution{box-shadow:0 0 0 1px var(--caution),0 0 14px rgba(255,176,0,.22)}
+  .track.warn{box-shadow:0 0 0 1px var(--warn),0 0 16px rgba(255,59,48,.30);animation:pulse .65s ease-in-out infinite}
   .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--muted);font-family:var(--mono)}
   .legend span{display:flex;align-items:center;gap:6px}
   .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
@@ -157,7 +161,7 @@
 
   .foot{margin-top:24px;font-size:11px;color:var(--muted);line-height:1.5;text-align:center;font-family:var(--mono);letter-spacing:.02em}
   :focus-visible{outline:2px solid var(--go);outline-offset:2px}
-  @media (prefers-reduced-motion:reduce){.hero.warn{animation:none;border-color:var(--warn)}}
+  @media (prefers-reduced-motion:reduce){.hero.warn,.track.warn{animation:none;border-color:var(--warn)}}
 
   /* ---- iPad / wide ---- */
   @media(min-width:760px){
@@ -230,7 +234,7 @@
       <div class="seg reserve" id="segReserve" style="width:0%"></div>
     </div>
     <div class="legend">
-      <span><i class="dot hold"></i>HOLD <b id="lgHold">—</b></span>
+      <span><i class="dot hold" id="dotHold"></i>HOLD <b id="lgHold">—</b></span>
       <span><i class="dot divert"></i>DIVERT <b id="lgDivert">—</b></span>
       <span><i class="dot reserve"></i><span class="res-lbl">RESERVE</span> <b id="lgReserve">—</b></span>
       <span>BINGO <b id="lgBingo">—</b></span>
@@ -356,6 +360,13 @@
   function fmtFuel(n){return isFinite(n)?Math.round(n).toLocaleString()+' '+unit:'—';}
   function fmtHMM(m){if(m<0)m=0;return Math.floor(m/60)+':'+pad(Math.round(m%60));}
   function setResLbl(t){document.querySelectorAll('.res-lbl').forEach(e=>e.textContent=t);}
+  function setBarState(s){
+    const seg=$('segHold'), tr=$('track'), dot=$('dotHold');
+    seg.classList.remove('caution','warn'); tr.classList.remove('caution','warn');
+    if(s==='caution'){seg.classList.add('caution');tr.classList.add('caution');dot.style.background='var(--caution)';}
+    else if(s==='warn'){seg.classList.add('warn');tr.classList.add('warn');dot.style.background='var(--warn)';}
+    else{dot.style.background='var(--go)';}
+  }
 
   function setUnitLabels(){
     document.querySelectorAll('.u-lbl').forEach(el=>{
@@ -478,7 +489,7 @@
     if(!isFinite(fob)||!isFinite(ff)||ff<=0){
       $('holdTime').textContent='--:--';$('stateLabel').textContent='MAX HOLD TIME';
       $('pushZ').textContent='--:--';$('pushL').textContent='--:--';$('cdown').textContent='--:--';
-      pushTime=null;if(firing)stopAlarm();alarmFired=false;return;
+      pushTime=null;if(firing)stopAlarm();alarmFired=false;setBarState('go');return;
     }
 
     const holdMin=((fob-bingo)/ff)*60;
@@ -489,9 +500,9 @@
     $('pushZ').textContent=pad(pushTime.getUTCHours())+':'+pad(pushTime.getUTCMinutes());
     $('pushL').textContent=pad(pushTime.getHours())+':'+pad(pushTime.getMinutes());
 
-    if(holdMin<=0){ro.classList.add('warn');$('stateLabel').textContent='BELOW BINGO — DEPART NOW';$('holdTime').textContent='0:00';}
-    else if(holdMin<=10){ro.classList.add('caution');$('stateLabel').textContent='CAUTION — APPROACHING BINGO';}
-    else{$('stateLabel').textContent='MAX HOLD TIME';}
+    if(holdMin<=0){ro.classList.add('warn');$('stateLabel').textContent='BELOW BINGO — DEPART NOW';$('holdTime').textContent='0:00';setBarState('warn');}
+    else if(holdMin<=10){ro.classList.add('caution');$('stateLabel').textContent='CAUTION — APPROACHING BINGO';setBarState('caution');}
+    else{$('stateLabel').textContent='MAX HOLD TIME';setBarState('go');}
     if(holdMin>0){if(firing)stopAlarm();alarmFired=false;}
     tickCountdown();
   }
