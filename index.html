@@ -111,6 +111,22 @@
   .qf-row button:active{background:#124032}
   .qf-hint{font-family:var(--mono);font-size:11px;color:var(--go);margin-top:6px;min-height:16px;letter-spacing:.03em}
 
+  /* ---- OBSERVED BURN ---- */
+  .obs-burn{display:none;border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+  .obs-burn.show{display:block}
+  .obs-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .obs-label{font-size:9px;letter-spacing:.22em;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .obs-val{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .obs-val.go{color:var(--go)}
+  .obs-val.caution{color:var(--caution)}
+  .obs-val.warn{color:var(--warn)}
+  .obs-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;min-height:14px}
+  .obs-use{background:var(--go-dim);border:1px solid #1c5c45;color:var(--go);font-family:var(--mono);
+    font-size:13px;font-weight:700;letter-spacing:.1em;padding:12px 20px;border-radius:10px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+  .obs-use.caution{background:var(--caution-dim);border-color:#5c4400;color:var(--caution)}
+  .obs-use.warn{background:var(--warn-dim);border-color:var(--warn);color:var(--warn)}
+  .obs-use:active{opacity:.8}
+
   /* ---- ABOVE BINGO color states (time-based) ---- */
   #bAbove{transition:color .4s}
   #bAbove.go{color:var(--go)}
@@ -223,7 +239,6 @@
     .herorow>.hero{flex:1}
     .holdtime{font-size:clamp(56px,9vw,120px)}
     .bingoNum{font-size:clamp(50px,8vw,108px)}
-    .lower{grid-template-columns:1.1fr .9fr;gap:20px;align-items:start}
     .actabs button{font-size:17px;padding:14px 0}
     .field input{font-size:23px}
     .sub b{font-size:18px}
@@ -233,6 +248,11 @@
   @media(prefers-reduced-motion:reduce){
     .hero.warn,.track.warn,.readout.firing,.alarmbar[data-state="firing"]{animation:none;border-color:var(--warn)}
   }
+  /* hide number input spinners */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield}
+
   :focus-visible{outline:2px solid var(--go);outline-offset:2px}
 </style>
 </head>
@@ -270,7 +290,7 @@
     </div>
     <div class="bingo hero" id="bingoPanel">
       <div class="state-label">BINGO FUEL</div>
-      <div class="bignum bingoNum"><span id="bingoVal">—</span><span class="u" id="bingoUnit">LB</span></div>
+      <div class="bignum bingoNum"><span id="bingoVal">—</span><span class="u" id="bingoUnit">LBS</span></div>
       <div class="sub">
         <div><span class="k">DIVERT</span><b id="bDivert">—</b></div>
         <div><span class="k"><span class="res-lbl">RESERVE</span></span><b id="bReserve">—</b></div>
@@ -297,11 +317,31 @@
   <div class="quickfob" id="quickFob">
     <div class="qf-label">FUEL CHECK</div>
     <div class="qf-row">
-      <input id="qfInput" inputmode="decimal" placeholder="00.0" autocomplete="off" aria-label="Quick FOB in thousands">
-      <span class="qf-unit">× 1,000 <span class="qf-unit-lbl">LB</span></span>
+      <input id="qfInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="000.0" maxlength="4" autocomplete="off" aria-label="Quick FOB — digits only, decimal auto-placed before last digit">
+      <span class="qf-unit">× 1,000 <span class="qf-unit-lbl">LBS</span> &nbsp;·&nbsp; decimal auto</span>
       <button id="qfApply">UPDATE</button>
     </div>
     <div class="qf-hint" id="qfHint">&nbsp;</div>
+
+    <!-- OBSERVED BURN -->
+    <div class="obs-burn" id="obsBurn">
+      <div class="obs-row">
+        <div>
+          <div class="obs-label">LAST INTERVAL</div>
+          <div class="obs-val" id="obsVal">—</div>
+          <div class="obs-sub" id="obsSub">&nbsp;</div>
+        </div>
+        <button class="obs-use" id="obsUse">USE</button>
+      </div>
+      <div class="obs-row" style="margin-top:10px">
+        <div>
+          <div class="obs-label">HOLD AVERAGE</div>
+          <div class="obs-val" id="obsAvgVal">—</div>
+          <div class="obs-sub" id="obsAvgSub">&nbsp;</div>
+        </div>
+        <button class="obs-use" id="obsAvgUse">USE</button>
+      </div>
+    </div>
   </div>
 
   <!-- LOWER -->
@@ -310,7 +350,7 @@
       <div class="sec-h">Fuel State</div>
       <div class="toprow">
         <div class="pill" role="group" aria-label="Fuel units">
-          <button data-unit="LB" aria-pressed="true">LB</button>
+          <button data-unit="LBS" aria-pressed="true">LBS</button>
           <button data-unit="KG" aria-pressed="false">KG</button>
           <button data-unit="GAL" aria-pressed="false">GAL</button>
         </div>
@@ -319,23 +359,25 @@
       <div class="grid">
         <div class="field full">
           <label for="fob">Fuel On Board (Now)</label>
-          <input id="fob" inputmode="decimal" placeholder="0" autocomplete="off">
-          <span class="unit u-lbl">LB</span>
+          <input id="fob" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="00.0" autocomplete="off">
+          <span class="unit u-lbl">LBS</span>
+          <span class="qf-hint" id="fobHint" style="font-size:11px">&nbsp;</span>
         </div>
         <div class="field">
           <label for="ff">Hold Fuel Flow / Hr</label>
-          <input id="ff" inputmode="decimal" placeholder="0" autocomplete="off">
-          <span class="unit u-lbl">LB/HR</span>
+          <input id="ff" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="00.0" autocomplete="off">
+          <span class="unit">THOUSANDS LBS/HR</span>
+          <span class="qf-hint" id="ffHint" style="font-size:11px">&nbsp;</span>
         </div>
         <div class="field">
           <label for="divert">Divert Fuel Req</label>
-          <input id="divert" inputmode="decimal" placeholder="0" autocomplete="off">
-          <span class="unit u-lbl">LB</span>
+          <input id="divert" type="number" step="any" inputmode="decimal" placeholder="0" autocomplete="off">
+          <span class="unit u-lbl">LBS</span>
         </div>
         <div class="field full">
           <label for="reserve">Reserve / Floor (Land With)</label>
-          <input id="reserve" inputmode="decimal" placeholder="0" autocomplete="off">
-          <span class="unit u-lbl">LB</span>
+          <input id="reserve" type="number" step="any" inputmode="decimal" placeholder="0" autocomplete="off">
+          <span class="unit u-lbl">LBS</span>
         </div>
         <div class="floorchips" id="floorchips" role="group" aria-label="Reserve floor">
           <button data-floor="min" aria-pressed="false">MIN <span class="ck" id="chMin">—</span></button>
@@ -343,22 +385,20 @@
         </div>
         <div class="field full">
           <label for="snap">Time Now (Z) — Optional</label>
-          <input id="snap" inputmode="numeric" placeholder="auto" autocomplete="off" maxlength="5">
+          <input id="snap" type="text" inputmode="numeric" placeholder="auto" autocomplete="off" maxlength="5" pattern="[0-9]*">
           <span class="unit">HHMM Z · Blank = Live</span>
         </div>
       </div>
-    </div>
 
-    <div class="col-builders">
-      <div class="sec-h">Optional Builders</div>
-      <details>
+      <div class="sec-h" style="margin-top:18px">Optional Builders</div>
+      <details id="divertDetails">
         <summary>Build Divert Fuel From Leg <span class="chev">›</span></summary>
         <div class="help-body">
           <div class="grid">
-            <div class="field"><label for="dDist">Distance (NM)</label><input id="dDist" inputmode="decimal" placeholder="0"></div>
-            <div class="field"><label for="dGs">Groundspeed (KT)</label><input id="dGs" inputmode="decimal" placeholder="0"></div>
-            <div class="field"><label for="dFf">Transit FF / Hr</label><input id="dFf" inputmode="decimal" placeholder="0"></div>
-            <div class="field"><label for="dAdd">Arrival Allowance</label><input id="dAdd" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dDist">Distance (NM)</label><input id="dDist" type="number" step="any" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dGs">Groundspeed (KT)</label><input id="dGs" type="number" step="any" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="dFf">Transit FF / Hr</label><input id="dFf" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="00.0" autocomplete="off"><span class="unit">THOUSANDS LBS/HR</span><span class="qf-hint" id="dFfHint" style="font-size:11px">&nbsp;</span></div>
+            <div class="field"><label for="dAdd">Arrival Allowance</label><input id="dAdd" type="number" step="any" inputmode="decimal" placeholder="0"></div>
           </div>
           <div class="arrchips" id="arrchips" role="group" aria-label="Arrival allowance">
             <button data-arr="final" aria-pressed="false">FINAL APP<span class="ck" id="acFinal">—</span></button>
@@ -373,8 +413,8 @@
         <summary>Build Reserve From Time <span class="chev">›</span></summary>
         <div class="help-body">
           <div class="grid">
-            <div class="field"><label for="rMin">Reserve Minutes</label><input id="rMin" inputmode="decimal" placeholder="0"></div>
-            <div class="field"><label for="rFf">FF / Hr At Reserve</label><input id="rFf" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="rMin">Reserve Minutes</label><input id="rMin" type="number" step="any" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="rFf">FF / Hr At Reserve</label><input id="rFf" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="00.0" autocomplete="off"><span class="unit">THOUSANDS LBS/HR</span><span class="qf-hint" id="rFfHint" style="font-size:11px">&nbsp;</span></div>
           </div>
           <div class="help-out" id="rOut"><span>Enter reserve data</span></div>
           <button class="apply" id="rApply">Apply To Reserve</button>
@@ -394,7 +434,7 @@
 
   <div class="foot">
     Decision support only — verify against approved aircraft performance data and reserves.<br>
-    Hold / Bingo · v1.8
+    Hold / Bingo · v3.8
   </div>
 </div>
 
@@ -415,15 +455,34 @@
   const FIELDS = ['fob','ff','divert','reserve','snap','dDist','dGs','dFf','dAdd','rMin','rFf'];
 
   const FLEET = {
-    '757':{unit:'LB',min:4500,emer:3500,final:300,gar:2500,ff:7000},
-    '767':{unit:'LB',min:7300,emer:5300,final:500,gar:3000,ff:10000}
+    '757':{unit:'LBS',min:4500,emer:3500,final:300,gar:2500,ff:7000},
+    '767':{unit:'LBS',min:7300,emer:5300,final:500,gar:3000,ff:10000}
   };
 
-  let unit='LB', activeAC=null, activeFloor=null, reserveAuto=false;
+  let unit='LBS', activeAC=null, activeFloor=null, reserveAuto=false;
   let armed=false, firing=false, alarmFired=false, audioCtx=null, alarmTimer=null, wakeLock=null;
   let pushTime=null, holdStartTime=null, isLocked=false, nightMode=false;
+  let currentFobLb=null; // tracks live FOB in lb; null when user is editing
+  let fobFocused=false;  // true while FOB field has focus — ticker pauses
   let cautMin=10, dataReady=false;
+  let fuelCheckLog=[];  // [{fob, t}] — FOB in lb, t = Date
 
+  // shared auto-decimal parser: digits × 100 = lb
+  // 4→400  36→3600  377→37700  4000→400000
+  function parseFuelDigits(raw){
+    const d=String(raw).replace(/[^0-9]/g,'').slice(0,4);
+    if(!d)return NaN;
+    return parseInt(d,10)*100;
+  }
+  function fuelToDigits(lb){return String(Math.round(lb/100));}
+  function formatFuelDisplay(digits){
+    // insert decimal before last digit: "365" → "36.5", "4" → "0.4"
+    if(!digits)return '';
+    const d=digits.replace(/[^0-9]/g,'');
+    if(d.length===0)return '';
+    if(d.length===1)return '0.'+d;
+    return d.slice(0,-1)+'.'+d.slice(-1);
+  }
   const ffUnit=()=>unit+'/HR';
   const num=v=>{const n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:NaN;};
   const pad=n=>String(n).padStart(2,'0');
@@ -456,7 +515,7 @@
     try{
       const ac=localStorage.getItem('hb_ac')||'MANUAL';
       const fl=localStorage.getItem('hb_floor')||'min';
-      const u=localStorage.getItem('hb_unit')||'LB';
+      const u=localStorage.getItem('hb_unit')||'LBS';
       const cm=parseFloat(localStorage.getItem('hb_cautMin'));
       if(isFinite(cm)&&cm>0){cautMin=cm;}
       setUnit(u);
@@ -475,7 +534,7 @@
     }
     activeAC=code;
     const j=FLEET[code];
-    setUnit('LB');
+    setUnit('LBS');
     $('frMin').textContent=j.min.toLocaleString();$('frEmer').textContent=j.emer.toLocaleString();
     $('frFinal').textContent=j.final.toLocaleString();$('frGar').textContent=j.gar.toLocaleString();
     $('fleetref').classList.add('show');
@@ -484,7 +543,7 @@
     $('acFinal').textContent='+'+j.final.toLocaleString();$('acGar').textContent='+'+j.gar.toLocaleString();
     $('arrchips').classList.add('show');
     // prefill FF if field is empty
-    if(!$('ff').value && j.ff){$('ff').value=j.ff;}
+    if(!$('ff').value && j.ff){$('ff').value=formatFuelDisplay(fuelToDigits(j.ff));}
     setFloor(floor || activeFloor || 'min');
     syncArrChips();savePrefs();compute();
   }
@@ -549,15 +608,17 @@
     $('lockBtn').textContent='LOCK';$('lockBtn').classList.remove('locked');
     dataReady=false;holdStartTime=null;$('elapsedBadge').classList.remove('show');
     $('quickFob').classList.remove('show');$('qfInput').value='';$('qfHint').textContent='\u00a0';
-    tickerBase=null;
+    fuelCheckLog=[];$('obsBurn').classList.remove('show');
+    tickerBase=null;currentFobLb=null;
     if(firing)stopAlarm();alarmFired=false;
     if(activeAC){reserveAuto=false;setFloor(activeFloor||'min');}
     syncArrChips();compute();
   });
 
   // ---- compute ----
-  function compute(){
-    const fob=num($('fob').value),ff=num($('ff').value),
+  function compute(updatePush=true){
+    const fob = currentFobLb !== null ? currentFobLb : parseFuelDigits($('fob').value);
+    const ff=parseFuelDigits($('ff').value),
           dv=num($('divert').value),rs=num($('reserve').value);
     const divert=isFinite(dv)?dv:0, reserve=isFinite(rs)?rs:0, bingo=divert+reserve;
     const hasData = isFinite(fob)&&fob>0;
@@ -567,7 +628,10 @@
     $('lockBtn').classList.toggle('show', nowReady);
     $('quickFob').classList.toggle('show', nowReady);
     // auto-start elapsed timer on first valid data entry
-    if(nowReady && !dataReady){dataReady=true;holdStartTime=new Date();$('elapsedBadge').classList.add('show');}
+    if(nowReady && !dataReady){
+      dataReady=true;holdStartTime=new Date();$('elapsedBadge').classList.add('show');
+      fuelCheckLog=[];  // clear log — hold average uses tickerBase as start reference
+    }
     if(!nowReady && !isLocked){dataReady=false;holdStartTime=null;$('elapsedBadge').classList.remove('show');}
 
     // bingo hero
@@ -594,11 +658,15 @@
     }
 
     const holdMin=((fob-bingo)/ff)*60;
-    const base=snapDate()||new Date();
-    pushTime=new Date(base.getTime()+Math.max(holdMin,0)*60000);
-    $('cdown').textContent=fmtHMM(holdMin);
-    $('pushZ').textContent=pad(pushTime.getUTCHours())+':'+pad(pushTime.getUTCMinutes());
-    $('pushL').textContent=pad(pushTime.getHours())+':'+pad(pushTime.getMinutes());
+
+    // only reset pushTime when called from user input — not from the ticker
+    if(updatePush){
+      const base=snapDate()||new Date();
+      pushTime=new Date(base.getTime()+Math.max(holdMin,0)*60000);
+      $('cdown').textContent=fmtHMM(holdMin);
+      $('pushZ').textContent=pad(pushTime.getUTCHours())+':'+pad(pushTime.getUTCMinutes());
+      $('pushL').textContent=pad(pushTime.getHours())+':'+pad(pushTime.getMinutes());
+    }
 
     if(holdMin<=0){
       ro.classList.add('warn');$('stateLabel').textContent='BELOW BINGO — DEPART NOW';setAboveColor('flash');
@@ -688,35 +756,121 @@
   });
 
   // ---- quick FOB update ----
+  // ---- quick FOB update — auto decimal before last digit ----
+  function qfParse(raw){return parseFuelDigits(raw);}
   function applyQuickFob(){
-    const raw=$('qfInput').value.trim();
-    if(!raw)return;
-    const n=parseFloat(raw);
-    if(!isFinite(n)||n<=0){$('qfHint').textContent='Invalid entry';return;}
-    const lbs=Math.round(n*1000);
-    $('fob').value=lbs;
-    $('qfHint').textContent=lbs.toLocaleString()+' '+unit+' set';
+    const lbs=qfParse($('qfInput').value);
+    if(!isFinite(lbs)||lbs<=0){$('qfHint').textContent='Enter 1–4 digits';return;}
+    currentFobLb=lbs;
+    $('fob').value=lbs.toLocaleString();  // show full lb value immediately
+    $('fobHint').textContent='\u00a0';
     $('qfInput').value='';
+    // log this check
+    fuelCheckLog.push({fob:lbs, t:new Date()});
+    updateObservedBurn();
     setTickerBase();compute();
   }
-  $('qfApply').addEventListener('click', applyQuickFob);
-  $('qfInput').addEventListener('keydown', e=>{if(e.key==='Enter')applyQuickFob();});
+  $('qfApply').addEventListener('click',applyQuickFob);
+  $('qfInput').addEventListener('keydown',e=>{if(e.key==='Enter')applyQuickFob();});
+
+  function obsColorState(pct){ return pct>10?'warn':pct>5?'caution':'go'; }
+  function applyObsFF(ff){
+    if(!isFinite(ff)||ff<=0)return;
+    $('ff').value=formatFuelDisplay(fuelToDigits(ff));
+    $('ffHint').textContent=ff.toLocaleString()+' LB/HR (observed)';
+    setTickerBase();compute();
+    // keep last check as new baseline for next interval
+    if(fuelCheckLog.length>0) fuelCheckLog=[fuelCheckLog[fuelCheckLog.length-1]];
+    updateObservedBurn();
+  }
+
+  function updateObservedBurn(){
+    const ob=$('obsBurn');
+    if(fuelCheckLog.length < 1){ob.classList.remove('show');return;}
+
+    const enteredFF=parseFuelDigits($('ff').value);
+    const pctDelta=(obs,ent)=>isFinite(ent)&&ent>0?((obs-ent)/ent)*100:0;
+    const minTime=2/60; // minimum 2-minute interval to show a rate
+
+    // ---- last interval (last two UPDATE presses) ----
+    let showLast=false;
+    if(fuelCheckLog.length >= 2){
+      const a=fuelCheckLog[fuelCheckLog.length-2], b=fuelCheckLog[fuelCheckLog.length-1];
+      const dtHrLast=(b.t-a.t)/3600000;
+      if(dtHrLast >= minTime){
+        const obsLast=Math.round((a.fob-b.fob)/dtHrLast);
+        if(obsLast>0){
+          const pctLast=pctDelta(obsLast,enteredFF);
+          const stateLast=obsColorState(pctLast);
+          const dtMinLast=Math.round(dtHrLast*60);
+          $('obsVal').textContent=formatFuelDisplay(fuelToDigits(obsLast));
+          $('obsVal').className='obs-val '+stateLast;
+          $('obsSub').textContent=dtMinLast+' min sample · '+(pctLast>=0?'+':'')+Math.round(pctLast)+'% vs entered';
+          $('obsUse').className='obs-use '+(stateLast==='go'?'':stateLast);
+          $('obsUse').dataset.ff=obsLast;
+          showLast=true;
+        }
+      }
+    }
+    if(!showLast){
+      $('obsVal').textContent='—';$('obsVal').className='obs-val';
+      $('obsSub').textContent='Need 2+ checks ≥2 min apart';
+      $('obsUse').dataset.ff='';
+    }
+
+    // ---- hold average (tickerBase → latest UPDATE press) ----
+    let showAvg=false;
+    if(tickerBase && fuelCheckLog.length >= 1){
+      const last=fuelCheckLog[fuelCheckLog.length-1];
+      const dtHrTotal=(last.t-tickerBase.t)/3600000;
+      if(dtHrTotal >= minTime){
+        const obsAvg=Math.round((tickerBase.fob-last.fob)/dtHrTotal);
+        if(obsAvg>0){
+          const pctAvg=pctDelta(obsAvg,enteredFF);
+          const stateAvg=obsColorState(pctAvg);
+          const dtMinTotal=Math.round(dtHrTotal*60);
+          $('obsAvgVal').textContent=formatFuelDisplay(fuelToDigits(obsAvg));
+          $('obsAvgVal').className='obs-val '+stateAvg;
+          $('obsAvgSub').textContent=dtMinTotal+' min hold · '+(pctAvg>=0?'+':'')+Math.round(pctAvg)+'% vs entered';
+          $('obsAvgUse').className='obs-use '+(stateAvg==='go'?'':stateAvg);
+          $('obsAvgUse').dataset.ff=obsAvg;
+          showAvg=true;
+        }
+      }
+    }
+    if(!showAvg){
+      $('obsAvgVal').textContent='—';$('obsAvgVal').className='obs-val';
+      $('obsAvgSub').textContent='Need first check ≥2 min after data entry';
+      $('obsAvgUse').dataset.ff='';
+    }
+
+    ob.classList.add('show');
+  }
+
+  $('obsUse').addEventListener('click',()=>applyObsFF(parseInt($('obsUse').dataset.ff)));
+  $('obsAvgUse').addEventListener('click',()=>applyObsFF(parseInt($('obsAvgUse').dataset.ff)));
   $('qfInput').addEventListener('input',()=>{
-    const n=parseFloat($('qfInput').value);
-    if(isFinite(n)&&n>0){$('qfHint').textContent='= '+Math.round(n*1000).toLocaleString()+' '+unit;}
-    else{$('qfHint').textContent='\u00a0';}
+    const lb = inputDigits($('qfInput'), 4, $('qfHint'), ' '+unit);
+    if(isFinite(lb)&&lb>0) $('qfHint').textContent=(lb/1000).toFixed(1)+' × 1,000 = '+lb.toLocaleString()+' '+unit;
+  });
+
+  // ---- autofocus divert builder on open ----
+  $('divertDetails').addEventListener('toggle', ()=>{
+    if($('divertDetails').open) setTimeout(()=>$('dDist').focus(), 50);
   });
 
   // ---- divert builder ----
   function calcDivert(){
     const dist=num($('dDist').value),gs=num($('dGs').value),
-          ff=num($('dFf').value),add=num($('dAdd').value)||0;
+          ff=parseFuelDigits($('dFf').value),add=num($('dAdd').value)||0;
     if(!isFinite(dist)||!isFinite(gs)||gs<=0||!isFinite(ff)){$('dOut').innerHTML='<span>Enter leg data</span>';return NaN;}
     const t=dist/gs,fuel=t*ff+add;
     $('dOut').innerHTML='ETE '+fmtHMM(t*60)+' &nbsp;·&nbsp; <b>'+fmtFuel(fuel)+'</b>';
     return fuel;
   }
-  ['dDist','dGs','dFf','dAdd'].forEach(id=>$(id).addEventListener('input',()=>calcDivert()));
+  $('dFf').addEventListener('focus',()=>{$('dFf').value='';$('dFfHint').textContent='\u00a0';});
+  $('dFf').addEventListener('input',()=>{inputDigits($('dFf'),3,$('dFfHint'),' LB/HR');calcDivert();});
+  ['dDist','dGs','dAdd'].forEach(id=>$(id).addEventListener('input',()=>calcDivert()));
   $('dApply').addEventListener('click',()=>{const f=calcDivert();if(isFinite(f)){$('divert').value=Math.round(f);compute();}});
   function syncArrChips(){
     const v=num($('dAdd').value),j=activeAC?FLEET[activeAC]:null;
@@ -740,11 +894,13 @@
 
   // ---- reserve builder ----
   function calcRes(){
-    const m=num($('rMin').value),ff=num($('rFf').value);
+    const m=num($('rMin').value),ff=parseFuelDigits($('rFf').value);
     if(!isFinite(m)||!isFinite(ff)){$('rOut').innerHTML='<span>Enter reserve data</span>';return NaN;}
     const fuel=(m/60)*ff;$('rOut').innerHTML='<b>'+fmtFuel(fuel)+'</b>';return fuel;
   }
-  ['rMin','rFf'].forEach(id=>$(id).addEventListener('input',calcRes));
+  $('rFf').addEventListener('focus',()=>{$('rFf').value='';$('rFfHint').textContent='\u00a0';});
+  $('rFf').addEventListener('input',()=>{inputDigits($('rFf'),3,$('rFfHint'),' LB/HR');calcRes();});
+  $('rMin').addEventListener('input',calcRes);
   $('rApply').addEventListener('click',()=>{const f=calcRes();if(isFinite(f)){
     $('reserve').value=Math.round(f);reserveAuto=false;activeFloor=null;
     document.querySelectorAll('#floorchips button').forEach(x=>x.setAttribute('aria-pressed','false'));
@@ -752,7 +908,41 @@
   });
 
   // ---- main input wiring ----
-  ['fob','ff','divert','snap'].forEach(id=>$(id).addEventListener('input',()=>{setTickerBase();compute();}));
+  function inputDigits(el, maxD, hintEl, hintSuffix){
+    // strip non-digits, strip leading zeros, cap at maxD digits
+    const raw = el.value.replace(/[^0-9]/g,'').replace(/^0+/,'').slice(0, maxD) || '';
+    el.value = formatFuelDisplay(raw);
+    // force cursor to end — eliminates any cursor-position ambiguity
+    const len = el.value.length;
+    try{ el.setSelectionRange(len, len); }catch(e){}
+    const lb = parseFuelDigits(raw);
+    if(isFinite(lb) && lb > 0){
+      hintEl.textContent = lb.toLocaleString() + hintSuffix;
+    } else {
+      hintEl.textContent = '\u00a0';
+    }
+    return lb;
+  }
+
+  $('fob').addEventListener('focus',()=>{
+    fobFocused=true;
+    currentFobLb=null;
+    $('fob').value='';$('fobHint').textContent='\u00a0';
+  });
+  $('fob').addEventListener('blur',()=>{fobFocused=false;});
+  $('ff').addEventListener('focus',()=>{$('ff').value='';$('ffHint').textContent='\u00a0';});
+  $('qfInput').addEventListener('focus',()=>{$('qfInput').value='';$('qfHint').textContent='\u00a0';});
+
+  $('fob').addEventListener('input',()=>{
+    const lb=inputDigits($('fob'), 4, $('fobHint'), ' '+unit);
+    currentFobLb=isFinite(lb)&&lb>0?lb:null;
+    setTickerBase(); compute();
+  });
+  $('ff').addEventListener('input',()=>{
+    inputDigits($('ff'), 3, $('ffHint'), ' LB/HR');
+    setTickerBase(); compute();
+  });
+  ['divert','snap'].forEach(id=>$(id).addEventListener('input',()=>{setTickerBase();compute();}));
 
   // ---- elapsed hold timer ----
   function tickElapsed(){
@@ -766,17 +956,21 @@
   // tickerBase = {fob, ff, time} set when data is entered or fuel check applied
   let tickerBase=null;
   function setTickerBase(){
-    const fob=parseFloat($('fob').value), ff=parseFloat($('ff').value);
+    const fob = currentFobLb !== null ? currentFobLb : parseFuelDigits($('fob').value);
+    const ff=parseFuelDigits($('ff').value);
     if(isFinite(fob)&&fob>0&&isFinite(ff)&&ff>0){
       tickerBase={fob,ff,t:new Date()};
     }else{tickerBase=null;}
   }
   function tickFob(){
-    if(!tickerBase)return;
+    if(!tickerBase||fobFocused)return;
     const elapsedHr=(new Date()-tickerBase.t)/3600000;
     const live=tickerBase.fob - elapsedHr*tickerBase.ff;
-    $('fob').value=Math.max(0,Math.round(live));
-    compute();
+    const lb=Math.max(0,Math.round(live/10)*10);
+    currentFobLb=lb;
+    $('fob').value=lb.toLocaleString(); // show full lb value ticking down
+    $('fobHint').textContent='\u00a0';  // hint redundant when field shows full value
+    compute(false);
   }
 
   // ---- clocks ----
