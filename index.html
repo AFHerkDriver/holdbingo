@@ -394,7 +394,7 @@
 
   <div class="foot">
     Decision support only — verify against approved aircraft performance data and reserves.<br>
-    Hold / Bingo · v1.7
+    Hold / Bingo · v1.8
   </div>
 </div>
 
@@ -772,10 +772,9 @@
     }else{tickerBase=null;}
   }
   function tickFob(){
-    if(!tickerBase||isLocked)return;
+    if(!tickerBase)return;
     const elapsedHr=(new Date()-tickerBase.t)/3600000;
     const live=tickerBase.fob - elapsedHr*tickerBase.ff;
-    // update display and recompute silently (don't reset ticker)
     $('fob').value=Math.max(0,Math.round(live));
     compute();
   }
