@@ -111,24 +111,12 @@
   .qf-row button:active{background:#124032}
   .qf-hint{font-family:var(--mono);font-size:11px;color:var(--go);margin-top:6px;min-height:16px;letter-spacing:.03em}
 
-  /* ---- FUEL BAR ---- */
-  .fuelbar{margin:13px 0 4px}
-  .track{height:18px;border-radius:9px;background:#08110e;border:1px solid var(--line);
-    display:flex;overflow:hidden;transition:box-shadow .25s}
-  .seg{height:100%;transition:width .3s ease,background .3s ease;box-shadow:inset -1.5px 0 0 rgba(8,17,14,.85)}
-  .seg:last-child{box-shadow:none}
-  .seg.hold{background:linear-gradient(180deg,#27f29a,#13b56c)}
-  .seg.hold.caution{background:linear-gradient(180deg,#ffd24a,#e09400)}
-  .seg.hold.warn{background:linear-gradient(180deg,#ff5b52,#cc2b22)}
-  .seg.divert{background:linear-gradient(180deg,#ffc23d,#d99200)}
-  .seg.reserve{background:linear-gradient(180deg,#ff5b52,#cc2b22)}
-  .track.caution{box-shadow:0 0 0 1px var(--caution),0 0 14px rgba(255,176,0,.22)}
-  .track.warn{box-shadow:0 0 0 1px var(--warn),0 0 16px rgba(255,59,48,.30);animation:pulse .65s ease-in-out infinite}
-  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono)}
-  .legend span{display:flex;align-items:center;gap:5px}
-  .dot{width:9px;height:9px;border-radius:2px;display:inline-block;transition:background .3s}
-  .dot.hold{background:var(--go)}.dot.divert{background:var(--caution)}.dot.reserve{background:var(--warn)}
-  .legend b{color:var(--txt);font-weight:600}
+  /* ---- ABOVE BINGO color states (time-based) ---- */
+  #bAbove{transition:color .4s}
+  #bAbove.go{color:var(--go)}
+  #bAbove.caution{color:var(--caution)}
+  #bAbove.warn{color:var(--warn)}
+  #bAbove.flash{animation:pulse .6s ease-in-out infinite;color:var(--warn)}
 
   /* ---- LOWER AREA ---- */
   .lower{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
@@ -316,21 +304,6 @@
     <div class="qf-hint" id="qfHint">&nbsp;</div>
   </div>
 
-  <!-- FUEL BAR -->
-  <div class="fuelbar">
-    <div class="track" id="track">
-      <div class="seg hold" id="segHold" style="width:0%"></div>
-      <div class="seg divert" id="segDivert" style="width:0%"></div>
-      <div class="seg reserve" id="segReserve" style="width:0%"></div>
-    </div>
-    <div class="legend">
-      <span><i class="dot hold" id="dotHold"></i>HOLD <b id="lgHold">—</b></span>
-      <span><i class="dot divert"></i>DIVERT <b id="lgDivert">—</b></span>
-      <span><i class="dot reserve"></i><span class="res-lbl">RESERVE</span> <b id="lgReserve">—</b></span>
-      <span>BINGO <b id="lgBingo">—</b></span>
-    </div>
-  </div>
-
   <!-- LOWER -->
   <div class="lower">
     <div class="col-inputs">
@@ -372,13 +345,6 @@
           <label for="snap">Time Now (Z) — Optional</label>
           <input id="snap" inputmode="numeric" placeholder="auto" autocomplete="off" maxlength="5">
           <span class="unit">HHMM Z · Blank = Live</span>
-        </div>
-        <div class="caut-row full grid">
-          <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <label for="cautMin">Caution Threshold</label>
-            <input id="cautMin" inputmode="decimal" value="10" style="">
-            <span>MIN remaining</span>
-          </div>
         </div>
       </div>
     </div>
@@ -428,7 +394,7 @@
 
   <div class="foot">
     Decision support only — verify against approved aircraft performance data and reserves.<br>
-    Hold / Bingo · v1.5
+    Hold / Bingo · v1.6
   </div>
 </div>
 
@@ -475,20 +441,10 @@
     document.querySelectorAll('.pill button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.unit===u?'true':'false'));
     setUnitLabels();
   }
-  function setBarState(s){
-    const seg=$('segHold'),tr=$('track'),dot=$('dotHold'),div=$('segDivert');
-    seg.classList.remove('caution','warn');tr.classList.remove('caution','warn');
-    div.style.background='';
-    if(s==='caution'){
-      seg.classList.add('caution');tr.classList.add('caution');
-      dot.style.background='var(--caution)';
-    }else if(s==='warn'){
-      seg.classList.add('warn');tr.classList.add('warn');
-      dot.style.background='var(--warn)';
-      div.style.background='linear-gradient(180deg,#ff5b52,#cc2b22)';
-    }else{
-      dot.style.background='var(--go)';
-    }
+  function setAboveColor(s){
+    const el=$('bAbove');
+    el.classList.remove('go','caution','warn','flash');
+    if(s) el.classList.add(s);
   }
 
   // ---- persist aircraft selection ----
@@ -595,6 +551,7 @@
     $('lockBtn').textContent='LOCK';$('lockBtn').classList.remove('locked');
     dataReady=false;holdStartTime=null;$('elapsedBadge').classList.remove('show');
     $('quickFob').classList.remove('show');$('qfInput').value='';$('qfHint').textContent='\u00a0';
+    tickerBase=null;
     if(firing)stopAlarm();alarmFired=false;
     if(activeAC){reserveAuto=false;setFloor(activeFloor||'min');}
     syncArrChips();compute();
@@ -624,20 +581,11 @@
 
     const bingoPanel=$('bingoPanel');bingoPanel.classList.remove('warn');
     if(hasData){
-      const holdFuel=Math.max(fob-bingo,0),total=fob,above=fob-bingo;
-      $('segHold').style.width=(100*holdFuel/total)+'%';
-      $('segDivert').style.width=(100*Math.min(divert,total)/total)+'%';
-      $('segReserve').style.width=(100*Math.min(reserve,Math.max(total-divert,0))/total)+'%';
-      $('lgHold').textContent=fmtFuel(holdFuel);
-      $('lgDivert').textContent=fmtFuel(divert);
-      $('lgReserve').textContent=fmtFuel(reserve);
-      $('lgBingo').textContent=fmtFuel(bingo);
+      const above=fob-bingo;
       $('bAbove').textContent=fmtFuel(Math.max(above,0));
       if(above<0)bingoPanel.classList.add('warn');
     }else{
-      ['segHold','segDivert','segReserve'].forEach(s=>$(s).style.width='0%');
-      ['lgHold','lgDivert','lgReserve','lgBingo'].forEach(l=>$(l).textContent='—');
-      $('bAbove').textContent='—';
+      $('bAbove').textContent='—';setAboveColor('');
     }
 
     const ro=$('readout');ro.classList.remove('caution','warn');
@@ -645,7 +593,7 @@
       $('holdTime').textContent='--:--';$('holdFmt').textContent='H:MM:SS';
       $('stateLabel').textContent='TIME TO PUSH';$('cdown').textContent='--:--';
       $('pushZ').textContent='--:--';$('pushL').textContent='--:--';
-      pushTime=null;if(firing)stopAlarm();alarmFired=false;setBarState('go');return;
+      pushTime=null;if(firing)stopAlarm();alarmFired=false;setAboveColor('');return;
     }
 
     const holdMin=((fob-bingo)/ff)*60;
@@ -656,11 +604,13 @@
     $('pushL').textContent=pad(pushTime.getHours())+':'+pad(pushTime.getMinutes());
 
     if(holdMin<=0){
-      ro.classList.add('warn');$('stateLabel').textContent='BELOW BINGO — DEPART NOW';setBarState('warn');
-    }else if(holdMin<=cautMin){
-      ro.classList.add('caution');$('stateLabel').textContent='CAUTION — APPROACHING BINGO';setBarState('caution');
+      ro.classList.add('warn');$('stateLabel').textContent='BELOW BINGO — DEPART NOW';setAboveColor('flash');
+    }else if(holdMin<=5){
+      ro.classList.add('warn');$('stateLabel').textContent='DEPART HOLDING NOW';setAboveColor('warn');
+    }else if(holdMin<=10){
+      ro.classList.add('caution');$('stateLabel').textContent='CAUTION — APPROACHING BINGO';setAboveColor('caution');
     }else{
-      $('stateLabel').textContent='TIME TO PUSH';setBarState('go');
+      $('stateLabel').textContent='TIME TO PUSH';setAboveColor('go');
     }
     if(holdMin>0){if(firing)stopAlarm();alarmFired=false;}
     tickCountdown();
@@ -673,19 +623,25 @@
       $('holdTime').textContent='0:00';$('holdFmt').textContent='MIN:SEC';
       const ro=$('readout');
       if(!ro.classList.contains('warn')){ro.classList.remove('caution');ro.classList.add('warn');
-        $('stateLabel').textContent='BINGO — DEPART NOW';setBarState('warn');}
+        $('stateLabel').textContent='BINGO — DEPART NOW';}
+      setAboveColor('flash');
       if(armed && !alarmFired){alarmFired=true;startAlarm();}
       return;
     }
     const h=Math.floor(rem/3600),m=Math.floor((rem%3600)/60),s=rem%60;
     if(h>0){$('holdTime').textContent=h+':'+pad(m)+':'+pad(s);$('holdFmt').textContent='H:MM:SS';}
     else{$('holdTime').textContent=pad(m)+':'+pad(s);$('holdFmt').textContent='MIN:SEC';}
-    // drive caution/warn from live countdown too
+    // time-based color thresholds: 10 min amber, 5 min red, 0 flash
     const remMin=rem/60;
     const ro=$('readout');
-    if(remMin>0 && remMin<=cautMin && !ro.classList.contains('warn')){
-      ro.classList.remove('warn');ro.classList.add('caution');
-      $('stateLabel').textContent='CAUTION — APPROACHING BINGO';setBarState('caution');
+    if(!ro.classList.contains('warn')){
+      if(remMin<=5){
+        ro.classList.remove('caution');ro.classList.add('warn');
+        $('stateLabel').textContent='DEPART HOLDING NOW';setAboveColor('warn');
+      }else if(remMin<=10){
+        ro.classList.remove('warn');ro.classList.add('caution');
+        $('stateLabel').textContent='CAUTION — APPROACHING BINGO';setAboveColor('caution');
+      }
     }
   }
 
@@ -736,15 +692,15 @@
 
   // ---- quick FOB update ----
   function applyQuickFob(){
-    const raw = $('qfInput').value.trim();
+    const raw=$('qfInput').value.trim();
     if(!raw)return;
-    const n = parseFloat(raw);
+    const n=parseFloat(raw);
     if(!isFinite(n)||n<=0){$('qfHint').textContent='Invalid entry';return;}
-    const lbs = Math.round(n * 1000);
-    $('fob').value = lbs;
-    $('qfHint').textContent = lbs.toLocaleString()+' '+unit+' set';
+    const lbs=Math.round(n*1000);
+    $('fob').value=lbs;
+    $('qfHint').textContent=lbs.toLocaleString()+' '+unit+' set';
     $('qfInput').value='';
-    compute();
+    setTickerBase();compute();
   }
   $('qfApply').addEventListener('click', applyQuickFob);
   $('qfInput').addEventListener('keydown', e=>{if(e.key==='Enter')applyQuickFob();});
@@ -799,21 +755,39 @@
   });
 
   // ---- main input wiring ----
-  ['fob','ff','divert','snap'].forEach(id=>$(id).addEventListener('input',compute));
+  ['fob','ff','divert','snap'].forEach(id=>$(id).addEventListener('input',()=>{setTickerBase();compute();}));
 
   // ---- elapsed hold timer ----
   function tickElapsed(){
-    if(!holdStartTime){return;}
+    if(!holdStartTime)return;
     const sec=Math.floor((new Date()-holdStartTime)/1000);
     const m=Math.floor(sec/60),s=sec%60;
     $('elapsedVal').textContent=pad(m)+':'+pad(s);
+  }
+
+  // ---- live FOB ticker ----
+  // tickerBase = {fob, ff, time} set when data is entered or fuel check applied
+  let tickerBase=null;
+  function setTickerBase(){
+    const fob=parseFloat($('fob').value), ff=parseFloat($('ff').value);
+    if(isFinite(fob)&&fob>0&&isFinite(ff)&&ff>0){
+      tickerBase={fob,ff,t:new Date()};
+    }else{tickerBase=null;}
+  }
+  function tickFob(){
+    if(!tickerBase||isLocked)return;
+    const elapsedHr=(new Date()-tickerBase.t)/3600000;
+    const live=tickerBase.fob - elapsedHr*tickerBase.ff;
+    // update display and recompute silently (don't reset ticker)
+    $('fob').value=Math.max(0,Math.round(live));
+    compute();
   }
 
   // ---- clocks ----
   function clocks(){
     const z=new Date();
     $('clockZ').textContent=pad(z.getUTCHours())+':'+pad(z.getUTCMinutes())+':'+pad(z.getUTCSeconds());
-    tickCountdown();tickElapsed();
+    tickCountdown();tickElapsed();tickFob();
   }
   setInterval(clocks,1000);clocks();
 
