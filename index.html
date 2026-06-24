@@ -394,7 +394,7 @@
 
   <div class="foot">
     Decision support only — verify against approved aircraft performance data and reserves.<br>
-    Hold / Bingo · v1.6
+    Hold / Bingo · v1.7
   </div>
 </div>
 
@@ -458,7 +458,7 @@
       const fl=localStorage.getItem('hb_floor')||'min';
       const u=localStorage.getItem('hb_unit')||'LB';
       const cm=parseFloat(localStorage.getItem('hb_cautMin'));
-      if(isFinite(cm)&&cm>0){cautMin=cm;$('cautMin').value=cm;}
+      if(isFinite(cm)&&cm>0){cautMin=cm;}
       setUnit(u);
       applyAircraft(ac,fl);
     }catch(e){applyAircraft('MANUAL');}
@@ -507,9 +507,7 @@
   document.querySelectorAll('.pill button').forEach(b=>b.addEventListener('click',()=>{setUnit(b.dataset.unit);savePrefs();compute();}));
 
   // ---- caution threshold ----
-  $('cautMin').addEventListener('input',()=>{
-    const v=num($('cautMin').value);if(v>0){cautMin=v;savePrefs();compute();}
-  });
+  // caution threshold fixed at 10 min (amber) and 5 min (red)
 
   // ---- snapshot time ----
   function snapDate(){
@@ -568,7 +566,6 @@
     const nowReady = isFinite(fob)&&fob>0&&isFinite(ff)&&ff>0;
     $('lockBtn').classList.toggle('show', nowReady);
     $('quickFob').classList.toggle('show', nowReady);
-    $('qfUnitLbl') && ($('qfUnitLbl').textContent=unit);
     // auto-start elapsed timer on first valid data entry
     if(nowReady && !dataReady){dataReady=true;holdStartTime=new Date();$('elapsedBadge').classList.add('show');}
     if(!nowReady && !isLocked){dataReady=false;holdStartTime=null;$('elapsedBadge').classList.remove('show');}
